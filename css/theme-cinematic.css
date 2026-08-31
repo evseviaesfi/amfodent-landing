@@ -1,0 +1,561 @@
+/* ==========================================================================
+   АМФОДЕНТ — ТЕМА «КИНЕМАТОГРАФИЧНЫЙ ПОСТЕР»
+   Тёмная версия лендинга поверх css/style.css + css/landing.css. Ничего не
+   удаляет и не переопределяет логику: только палитра, типографика и
+   декоративный слой (в т.ч. «матовое стекло» калькулятора). Подключается
+   последним файлом в <head>.
+   ========================================================================== */
+
+/* ---------- Токены: тёмная палитра поверх style.css/landing.css ---------- */
+:root {
+  --bg: #0A100E;
+  --surface: rgba(244, 251, 248, 0.05);
+  --surface-alt: rgba(244, 251, 248, 0.03);
+  --surface-sunken: rgba(244, 251, 248, 0.09);
+
+  --ink: #F4FBF8;
+  --ink-soft: rgba(244, 251, 248, 0.68);
+  --ink-faint: rgba(244, 251, 248, 0.46);
+
+  --accent: #3EF0C9;
+  --accent-dark: #22B597;
+  --accent-soft: rgba(62, 240, 201, 0.14);
+
+  --line: rgba(244, 251, 248, 0.14);
+  --line-strong: rgba(244, 251, 248, 0.28);
+
+  --warn: #E0B24A;
+  --warn-soft: rgba(224, 178, 74, 0.12);
+  --danger: #E06B5C;
+  --danger-soft: rgba(224, 107, 92, 0.12);
+
+  --shadow-card: 0 10px 24px -16px rgba(0, 0, 0, 0.55);
+  --shadow-panel: 0 24px 60px -24px rgba(0, 0, 0, 0.6);
+  --shadow-bar: 0 -10px 30px -12px rgba(0, 0, 0, 0.55);
+
+  --ink-deep: #050908;
+  --ink-deep-2: #081210;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 20px 44px -20px rgba(62, 240, 201, 0.22), 0 6px 18px -8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 30px 70px -26px rgba(62, 240, 201, 0.26), 0 10px 24px -10px rgba(0, 0, 0, 0.6);
+
+  --font-display: "Anton", "Instrument Sans", sans-serif;
+  --font-accent: "Newsreader", Georgia, serif;
+  --font-body: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body { background: var(--bg); color: var(--ink); }
+::selection { background: var(--accent); color: #0A100E; }
+
+/* ---------- Стеклянный слой поверх карточек калькулятора и сайта ---------- */
+.calc-steps, .calc-summary, .panel, .option, .option__box, .range-box, .field,
+.mobile-bar__panel, .breakdown-wrap, .lp-card, .lp-offer-card, .lp-task,
+.lp-kit, .lp-trust, .lp-header, .lp-faq details, .form-title, .clarify {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.option.is-checked {
+  box-shadow: 0 0 0 1px rgba(62, 240, 201, 0.28), 0 20px 40px -22px rgba(62, 240, 201, 0.4);
+}
+.option.is-checked .option__box { box-shadow: inset 0 0 0 3px rgba(10, 16, 14, 0.9); }
+
+/* Рифлёное стекло — акцент на сводке расчёта, как на макетах калькулятора */
+.calc-summary .panel {
+  background-image: repeating-linear-gradient(90deg, rgba(244, 251, 248, 0.035) 0px, rgba(244, 251, 248, 0.035) 1px, transparent 1px, transparent 7px);
+}
+
+.lp-note { color: #F4E3B8; background: var(--warn-soft); border-left-color: var(--warn); }
+.lp-note--neutral { color: var(--ink-soft); }
+
+/* ==========================================================================
+   ШАПКА
+   ========================================================================== */
+.lp-header { background: rgba(10, 16, 14, 0.72); border-bottom: 1px solid var(--line); }
+.lp-header.is-scrolled { background: rgba(10, 16, 14, 0.92); }
+.lp-logo { color: var(--ink); }
+.lp-logo__mark {
+  background: var(--ink);
+  color: #0C1B17;
+  font-family: var(--font-display);
+  font-weight: 400;
+  border-radius: 8px;
+}
+.lp-nav a { color: var(--ink-soft); }
+.lp-nav a:hover { color: var(--accent); }
+.lp-phone { color: var(--ink-soft); }
+
+/* ==========================================================================
+   ГЕРОЙ — КИНЕМАТОГРАФИЧНЫЙ ПОСТЕР
+   ========================================================================== */
+.lp-hero-cinematic {
+  position: relative;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  padding: 0;
+}
+@media (min-width: 900px) { .lp-hero-cinematic { min-height: min(84vh, 780px); } }
+
+.lp-hero-cinematic__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 60% 50%;
+}
+.lp-hero-cinematic__scrim-h {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(7,12,11,0.9) 0%, rgba(7,12,11,0.5) 40%, rgba(7,12,11,0.08) 62%, rgba(7,12,11,0.55) 100%);
+}
+.lp-hero-cinematic__scrim-v {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(7,12,11,0.55) 0%, rgba(7,12,11,0.05) 24%, rgba(7,12,11,0.35) 66%, rgba(7,12,11,0.96) 100%);
+}
+
+.lp-hero-cinematic__inner {
+  position: relative;
+  z-index: 3;
+  padding: 108px 20px 28px;
+}
+@media (min-width: 768px) { .lp-hero-cinematic__inner { padding: 118px 32px 36px; } }
+
+.lp-hero-cinematic__pretitle {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(13px, 1.6vw, 16px);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.lp-headline-wrap {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+}
+
+.lp-hero-cinematic__headline {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(56px, 12vw, 138px);
+  line-height: 0.86;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+  margin: 0;
+  text-wrap: balance;
+  opacity: 0;
+  animation: lp-headline-focus 1.15s cubic-bezier(.16,.84,.44,1) 0.15s 1 forwards;
+}
+
+/* «наведение резкости» — как на диагностическом снимке, изображение проступает и фокусируется */
+@keyframes lp-headline-focus {
+  0%   { opacity: 0; filter: blur(18px); transform: translateY(12px) scale(1.015); }
+  65%  { filter: blur(2px); }
+  100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+}
+
+/* луч сканера, однократно проходящий по заголовку следом за фокусировкой текста */
+.lp-headline-wrap::after {
+  content: '';
+  position: absolute;
+  left: -15%; right: -15%;
+  top: -25%;
+  height: 55%;
+  background: linear-gradient(180deg,
+    rgba(62,240,201,0) 0%,
+    rgba(62,240,201,0.5) 45%,
+    rgba(62,240,201,0.85) 50%,
+    rgba(62,240,201,0.5) 55%,
+    rgba(62,240,201,0) 100%);
+  filter: blur(3px);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translateY(-60%);
+  animation: lp-headline-scan 1.4s cubic-bezier(.4,0,.2,1) 0.35s 1 forwards;
+  pointer-events: none;
+}
+@keyframes lp-headline-scan {
+  0%   { opacity: 0; transform: translateY(-60%); }
+  10%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(260%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-hero-cinematic__headline { opacity: 1; animation: none; filter: none; transform: none; }
+  .lp-headline-wrap::after { display: none; }
+}
+
+.lp-hero-cinematic__sub {
+  font-family: var(--font-accent);
+  font-style: italic;
+  font-size: clamp(16px, 2vw, 24px);
+  line-height: 1.4;
+  color: rgba(244, 251, 248, 0.9);
+  max-width: 30ch;
+  margin: 18px 0 0;
+}
+@media (min-width: 900px) {
+  .lp-hero-cinematic__sub { position: absolute; right: 32px; top: 118px; text-align: right; margin: 0; }
+}
+
+.lp-hero-cinematic__stats {
+  display: flex; flex-wrap: wrap; gap: 8px 20px;
+  margin-top: 20px;
+  font-size: 12.5px;
+  color: rgba(244, 251, 248, 0.6);
+}
+.lp-hero-cinematic__stats b { color: var(--accent); font-weight: 600; }
+.lp-why-trigger {
+  appearance: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  font: inherit; font-size: 12.5px; font-weight: 700;
+  padding: 8px 16px 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(62,240,201,0.5);
+  background: rgba(62,240,201,0.1);
+  color: var(--accent);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: lp-why-in 0.7s cubic-bezier(.16,.84,.44,1) 1.35s 1 forwards;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.lp-why-trigger::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(62,240,201,0.6);
+  animation: lp-why-pulse-ring 2.4s ease-out 2.3s infinite;
+}
+.lp-why-trigger:hover {
+  background: rgba(62,240,201,0.2);
+  border-color: var(--accent);
+  box-shadow: 0 8px 22px -10px rgba(62,240,201,0.55);
+}
+@keyframes lp-why-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lp-why-pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(62,240,201,0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(62,240,201,0); }
+  100% { box-shadow: 0 0 0 0 rgba(62,240,201,0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-why-trigger { opacity: 1; animation: none; transform: none; }
+  .lp-why-trigger::before { animation: none; }
+}
+
+.lp-why-modal {
+  position: fixed; inset: 0; z-index: 200;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 24px;
+  background: rgba(5, 9, 8, 0.82);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.lp-why-modal:not([hidden]) { display: flex; animation: lp-why-fade 0.2s ease; }
+@keyframes lp-why-fade { from { opacity: 0; } to { opacity: 1; } }
+.lp-why-modal__panel {
+  position: relative;
+  width: 100%; max-width: 560px;
+  max-height: 88vh; overflow-y: auto;
+  background: #0A100E;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 34px 30px 30px;
+  box-shadow: var(--shadow-panel);
+}
+.lp-why-modal__title {
+  font-family: var(--font-display); font-weight: 400;
+  font-size: 26px; color: var(--ink); margin: 8px 0 20px;
+}
+.lp-why-modal__grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px;
+  margin-bottom: 22px;
+}
+.lp-why-modal__close {
+  position: absolute; top: 16px; right: 16px;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--line); background: transparent; color: var(--ink);
+  font-size: 14px; cursor: pointer;
+}
+.lp-why-modal__close:hover { border-color: var(--accent); color: var(--accent); }
+@media (max-width: 480px) { .lp-why-modal__grid { grid-template-columns: 1fr; } }
+
+.lp-hero-cinematic__bottom {
+  position: relative; z-index: 3;
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 18px;
+  padding: 0 20px 30px;
+}
+@media (min-width: 768px) { .lp-hero-cinematic__bottom { padding: 0 32px 34px; } }
+.lp-hero-cinematic__lede {
+  margin: 0; font-size: 14.5px; line-height: 1.6; color: rgba(244, 251, 248, 0.78); max-width: 46ch;
+}
+.lp-hero-cinematic__cta { display: flex; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+
+/* ==========================================================================
+   ЛИПКАЯ ПАНЕЛЬ ДЕЙСТВИЙ
+   ========================================================================== */
+.lp-ctabar {
+  display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 0 12px;
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+}
+.lp-ctabar__btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 600;
+  border: 1px solid var(--line);
+  background: transparent; color: var(--ink);
+  cursor: pointer; white-space: nowrap;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.lp-ctabar__btn--primary { background: var(--ink); color: #0C1B17; border-color: var(--ink); }
+.lp-ctabar__btn--accent { background: var(--accent-soft); color: var(--accent); border-color: rgba(62,240,201,0.4); }
+.lp-ctabar__btn:hover { border-color: var(--accent); color: var(--accent); }
+.lp-ctabar__btn--primary:hover { background: var(--accent); border-color: var(--accent); color: #0C1B17; }
+@media (max-width: 640px) { .lp-ctabar { justify-content: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; } }
+
+/* ==========================================================================
+   ИКОНКИ ОБОРУДОВАНИЯ (используются в «Что входит в услугу»)
+   ========================================================================== */
+.lp-eq-icon {
+  flex: 0 0 auto;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  display: flex; align-items: center; justify-content: center;
+}
+.lp-eq-icon svg { width: 20px; height: 20px; stroke: var(--accent); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.lp-offer-card__num { display: none; }
+.lp-offer-card { align-items: center; }
+
+/* ==========================================================================
+   КНОПКИ — конвенция стрелок (↗ переход в калькулятор, → продолжить, ← назад)
+   ========================================================================== */
+.lp-btn--primary { background: var(--ink); color: #0C1B17; }
+.lp-btn--primary:hover { background: var(--accent); box-shadow: 0 14px 30px -12px rgba(62,240,201,0.5); }
+.lp-btn--ghost { color: var(--ink); border-color: var(--line-strong); }
+.lp-btn--ghost:hover { border-color: var(--accent); color: var(--accent); }
+.lp-btn--onlight { background: var(--ink); color: #0C1B17; }
+.lp-btn--onlight:hover { background: var(--accent); }
+.lp-btn--outlineLight { color: var(--ink); border-color: rgba(244,251,248,0.4); }
+
+/* ==========================================================================
+   СЕКЦИИ / КАРТОЧКИ — общий тёмный слой
+   ========================================================================== */
+.lp-section--alt { background: var(--surface); }
+.lp-eyebrow { color: var(--accent); }
+.lp-zoom__scrim { background: linear-gradient(180deg, rgba(7,12,11,0.1) 0%, rgba(7,12,11,0.85) 100%); }
+.lp-zoom__text { color: var(--ink); }
+.lp-zoom__hint { color: var(--ink-faint); }
+
+.lp-task { background: var(--surface); }
+.lp-task:hover { border-color: var(--accent); box-shadow: 0 14px 32px -18px rgba(62,240,201,0.35); }
+.lp-task__cta { color: var(--accent); }
+
+.lp-gallery__item::after { background: linear-gradient(0deg, rgba(5,9,8,0.7) 0%, transparent 55%); }
+.lp-gallery__cta { margin-top: 24px; display: flex; justify-content: center; }
+.lp-lightbox { background: rgba(5, 9, 8, 0.94); }
+
+.lp-kit { background: var(--surface); }
+.lp-kit--highlight { border-color: var(--accent); }
+.lp-kit__badge { background: var(--accent); color: #0C1B17; }
+.lp-kit__price { color: var(--ink); }
+
+.lp-step__num { background: var(--surface-sunken); color: var(--accent); }
+
+.lp-brand-chip { background: var(--surface); border-color: var(--line); color: var(--ink-soft); }
+.lp-brand-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+.lp-trust { background: var(--surface); }
+.lp-trust__value { color: var(--accent); }
+
+.lp-faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; padding: 0 16px; }
+.lp-faq summary { color: var(--ink); }
+.lp-faq summary::after { color: var(--ink-faint); }
+
+.lp-final { background: linear-gradient(135deg, #0B1A16 0%, #071310 100%); }
+.lp-final::before { background: radial-gradient(120% 100% at 20% 0%, rgba(62,240,201,0.18) 0%, transparent 55%); }
+.lp-final__title { color: var(--ink); }
+
+.lp-footer { border-top-color: var(--line); }
+
+.lp-fab .lp-btn--primary { background: var(--ink); color: #0C1B17; box-shadow: 0 12px 30px -10px rgba(62,240,201,0.4); }
+.lp-fab { bottom: 88px; }
+@media (min-width: 960px) { .lp-fab { bottom: 98px; } }
+
+/* ==========================================================================
+   БОТ-«ПОДОГРЕВ»
+   ========================================================================== */
+.lp-chat-trigger {
+  position: fixed; right: 18px; bottom: 18px; z-index: 60;
+  width: 52px; height: 52px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #0C1B17;
+  border: none; cursor: pointer;
+  box-shadow: 0 14px 30px -12px rgba(62, 240, 201, 0.5);
+}
+@media (min-width: 960px) { .lp-chat-trigger { right: 26px; bottom: 26px; } }
+.lp-chat-trigger svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.lp-chat-trigger__dot {
+  position: absolute; top: -3px; right: -3px;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: #FF6B4A;
+  border: 2px solid var(--bg);
+  animation: lp-chat-blink 1.4s ease-in-out infinite;
+}
+.lp-chat-trigger.is-active .lp-chat-trigger__dot { animation: none; opacity: 0; }
+@keyframes lp-chat-blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.25; transform: scale(0.75); } }
+@media (prefers-reduced-motion: reduce) {
+  .lp-chat-trigger__dot { animation: none; }
+}
+
+.lp-chat {
+  position: fixed; right: 18px; bottom: 84px; z-index: 61;
+  width: min(340px, calc(100vw - 36px));
+  background: #0A100E;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-panel);
+  overflow: hidden;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  animation: lp-chat-pop 0.18s ease;
+}
+@media (min-width: 960px) { .lp-chat { right: 26px; bottom: 94px; } }
+@keyframes lp-chat-pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+.lp-chat__header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.lp-chat__avatar {
+  position: relative; flex: 0 0 auto;
+  width: 38px; height: 38px; border-radius: 50%;
+  overflow: hidden;
+  background: var(--accent-soft);
+  display: flex; align-items: center; justify-content: center;
+}
+.lp-chat__avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.lp-chat__avatar-fallback {
+  font-family: var(--font-display); font-size: 15px; color: var(--accent);
+}
+.lp-chat__who { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.lp-chat__name { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.lp-chat__status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-faint); }
+.lp-chat__status i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+.lp-chat__close {
+  flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--line); background: transparent; color: var(--ink-faint);
+  cursor: pointer; font-size: 12px;
+}
+.lp-chat__close:hover { color: var(--ink); border-color: var(--accent); }
+
+.lp-chat__body { padding: 16px; display: flex; flex-direction: column; gap: 10px; max-height: min(64vh, 520px); overflow-y: auto; }
+.lp-chat__bubble {
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 14px 14px 14px 4px;
+  padding: 12px 14px;
+  font-size: 13.5px; line-height: 1.5; color: var(--ink);
+  animation: lp-chat-msg-in 0.22s ease;
+}
+@keyframes lp-chat-msg-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.lp-chat__bubble--user {
+  align-self: flex-end;
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  border-radius: 14px 14px 4px 14px;
+  color: var(--ink);
+  max-width: 84%;
+}
+.lp-chat__typing {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 14px 14px 14px 4px;
+  padding: 12px 14px;
+  width: fit-content;
+  animation: lp-chat-msg-in 0.22s ease;
+}
+.lp-chat__typing span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ink-faint);
+  animation: lp-chat-typing-dot 1.1s ease-in-out infinite;
+}
+.lp-chat__typing span:nth-child(2) { animation-delay: 0.15s; }
+.lp-chat__typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes lp-chat-typing-dot { 0%, 60%, 100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+.lp-chat__quick { display: flex; flex-direction: column; gap: 8px; animation: lp-chat-msg-in 0.22s ease; }
+.lp-chat__reply {
+  text-align: left;
+  padding: 10px 14px; border-radius: 10px;
+  border: 1px solid var(--line-strong); background: transparent; color: var(--ink);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.lp-chat__reply:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.lp-chat__cta {
+  margin-top: 2px; text-align: center;
+  padding: 11px 14px; border-radius: 10px;
+  border: none; background: var(--ink); color: #0C1B17;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  animation: lp-chat-msg-in 0.22s ease;
+}
+.lp-chat__cta:hover { background: var(--accent); }
+.lp-chat__cta--muted {
+  background: transparent; color: var(--ink-faint); font-weight: 600;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.lp-chat__cta--muted:hover { color: var(--accent); background: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .lp-chat__bubble, .lp-chat__typing, .lp-chat__quick, .lp-chat__cta { animation: none; }
+  .lp-chat__typing span { animation: none; opacity: 0.6; }
+}
+
+.lp-chat__inputrow {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.lp-chat__input {
+  flex: 1; min-width: 0;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ink);
+}
+.lp-chat__input::placeholder { color: var(--ink-faint); }
+.lp-chat__input:focus { outline: none; border-color: var(--accent); }
+.lp-chat__send {
+  flex: 0 0 auto; width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #0C1B17; border: none; cursor: pointer;
+}
+.lp-chat__send svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.8; fill: none; }
+.lp-chat__send:hover { opacity: 0.9; }
+
+/* ==========================================================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ ГЕРОЯ
+   ========================================================================== */
+@media (max-width: 640px) {
+  .lp-hero-cinematic { min-height: 560px; }
+  .lp-hero-cinematic__headline { font-size: clamp(52px, 17vw, 88px); }
+  .lp-hero-cinematic__bottom { flex-direction: column; align-items: flex-start; }
+}
