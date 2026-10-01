@@ -133,6 +133,17 @@ body { background: var(--bg); color: var(--ink); }
   margin-bottom: 10px;
 }
 
+/* Один H1 на страницу: «Стоматологический кабинет» + «ПОД КЛЮЧ» в одном заголовке.
+   Сбрасываем стили h1 из style.css, чтобы внешний вид остался прежним. */
+.lp-hero-h1 {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+.lp-hl-line { display: block; }
+
 .lp-headline-wrap {
   position: relative;
   display: inline-block;
@@ -140,6 +151,7 @@ body { background: var(--bg); color: var(--ink); }
 }
 
 .lp-hero-cinematic__headline {
+  display: block;
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(56px, 12vw, 138px);
