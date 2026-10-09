@@ -571,3 +571,27 @@ body { background: var(--bg); color: var(--ink); }
   .lp-hero-cinematic__headline { font-size: clamp(52px, 17vw, 88px); }
   .lp-hero-cinematic__bottom { flex-direction: column; align-items: flex-start; }
 }
+
+/* ==========================================================================
+   КАЛЬКУЛЯТОР: КОМПЛЕКТЫ, СОСТАВ, РЕНТГЕН И 3D (октябрь 2026)
+   ========================================================================== */
+.option-grid--kits { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.step__group-label {
+  margin: 18px 0 8px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.step__group-label:first-child { margin-top: 0; }
+/* Позиция, которая входит в комплект всегда: выглядит выбранной, но не кликается. */
+.option.is-fixed { cursor: default; }
+.option.is-fixed:hover { border-color: var(--accent); }
+.option.is-fixed .option__box { opacity: 0.55; }
+.tag--fixed { background: var(--surface-sunken); color: var(--ink-soft); border: 1px solid var(--line); }
+.tag--reco { border-color: rgba(62, 240, 201, 0.35); }
+/* Выбор поля обзора томографа — вложенный блок под карточкой. */
+.option-sub {
+  margin: -2px 0 4px 28px;
+  padding-left: 14px;
+  border-left: 2px solid var(--accent-soft);
+}
+.option-sub .step__group-label { margin-top: 6px; }
