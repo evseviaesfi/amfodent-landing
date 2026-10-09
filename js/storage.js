@@ -15,7 +15,7 @@
 const AmfodentStorage = (function () {
   'use strict';
 
-  const KEY = 'amfodent_calculator_state_v1';
+  const KEY = 'amfodent_calculator_state_v2';
 
   let memoryFallback = null;
   let available = null; // null = ещё не проверяли

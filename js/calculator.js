@@ -6,8 +6,8 @@
  * поэтому расчёт можно проверять отдельно от интерфейса (см. tests/).
  *
  * Порядок расчёта:
- *   1. Позиции оборудования (установки × количество, компрессор, стерилизация,
- *      рентген, дополнительное оснащение) → equipmentSubtotal.
+ *   1. Позиции оборудования (комплект: установка и компрессор всегда, остальное
+ *      по галочкам; рентген и 3D; дополнительное оснащение) → equipmentSubtotal.
  *   2. Монтаж: процент от equipmentSubtotal, но не меньше минимума
  *      (минимум применяется только если оборудование выбрано).
  *   3. total = equipmentSubtotal + монтаж.
@@ -59,6 +59,12 @@ const AmfodentCalculator = (function () {
       : Math.ceil(value / step) * step;
   }
 
+  /** Выбранный вариант поля обзора томографа (по умолчанию — первый в config). */
+  function tomographOption(config, fovId) {
+    const list = (config.tomographFov && config.tomographFov.options) || [];
+    return findById(list, fovId) || list[0] || null;
+  }
+
   /** Количество единиц позиции с учётом scaling. */
   function scaledQuantity(item, wpCount) {
     if (item.scaling === 'perWorkplace') return Math.max(1, wpCount || 1);
@@ -95,39 +101,42 @@ const AmfodentCalculator = (function () {
       return line;
     }
 
-    // 1. Стоматологические установки
-    const tier = findById(config.installations.tiers, state.installation && state.installation.tierId);
-    if (tier) {
-      const cfgInst = config.installations;
-      let qty = parseInt(state.installation.quantity, 10);
-      if (!isFinite(qty)) qty = 1;
-      qty = Math.min(Math.max(qty, cfgInst.quantityMin || 1), cfgInst.quantityMax || 20);
-      const brand = (state.installation.brand || '').trim();
-      pushLine('Стоматологическая установка', tier, qty, {
-        label: tier.label + (brand ? ' (' + brand + ')' : ''),
-        brand: brand || null
+    // 1. Комплект: обязательные позиции (установка, компрессор) входят всегда,
+    //    необязательные (стерилизация, мебель, наконечники) — только с галочкой.
+    const kit = findById(config.kits, state.kit);
+    const kitOptions = Array.isArray(state.kitOptions) ? state.kitOptions : [];
+    const perWp = Math.max(1, wpCount || 1);
+    if (kit) {
+      config.kitComponents.forEach(function (comp) {
+        const item = kit.items[comp.id];
+        if (!item) return;
+        if (!comp.required && kitOptions.indexOf(comp.id) === -1) return;
+        pushLine(comp.group, Object.assign({ id: comp.id }, item),
+          comp.scaling === 'perWorkplace' ? perWp : 1,
+          { includes: item.includes || [], perWorkplace: comp.scaling === 'perWorkplace' });
       });
     }
 
-    // 2. Компрессор и аспирация
-    const compressor = findById(config.compressor, state.compressor);
-    if (compressor && compressor.price > 0) {
-      pushLine('Компрессор и аспирация', compressor, 1);
-    }
+    // 2. Рентген и 3D — несколько позиций; у томографа выбирается поле обзора.
+    const xraySel = Array.isArray(state.xray) ? state.xray : [];
+    config.xray.forEach(function (x) {
+      if (xraySel.indexOf(x.id) === -1) return;
+      if (x.hasFov) {
+        const fov = tomographOption(config, state.tomographFov);
+        if (!fov) return;
+        pushLine('Рентгенодиагностика', {
+          id: x.id + '_' + fov.id,
+          label: x.label + ', поле ' + fov.label + (fov.model ? ' (' + fov.model + ')' : ''),
+          price: fov.price,
+          priceFrom: fov.priceFrom,
+          provisional: fov.provisional
+        }, 1);
+      } else {
+        pushLine('Рентгенодиагностика', x, 1);
+      }
+    });
 
-    // 3. Стерилизация
-    const sterilization = findById(config.sterilization, state.sterilization);
-    if (sterilization && sterilization.price > 0) {
-      pushLine('Стерилизация', sterilization, 1, { includes: sterilization.includes || [] });
-    }
-
-    // 4. Рентгенодиагностика
-    const xray = findById(config.xray, state.xray);
-    if (xray && xray.price > 0) {
-      pushLine('Рентгенодиагностика', xray, 1);
-    }
-
-    // 5. Дополнительное оснащение — в порядке config, а не в порядке кликов,
+    // 3. Дополнительное оснащение — в порядке config, а не в порядке кликов,
     //    чтобы расшифровка не «прыгала» при переключении галочек.
     config.extras.forEach(function (extra) {
       if (extras.indexOf(extra.id) === -1) return;
@@ -138,24 +147,27 @@ const AmfodentCalculator = (function () {
 
     const equipmentSubtotal = lines.reduce(function (sum, l) { return sum + l.total; }, 0);
 
-    // 6. Монтаж
+    // 4. Монтаж
     const installCfg = config.services.installService;
     const installByPercent = equipmentSubtotal * (installCfg.percent / 100);
-    const installServiceAmount = equipmentSubtotal > 0
+    const installIncluded = installCfg.includedInTotal !== false;
+    const installServiceAmount = (installIncluded && equipmentSubtotal > 0)
       ? Math.max(installByPercent, installCfg.min)
       : 0;
 
     const total = equipmentSubtotal + installServiceAmount;
 
-    // 7. Диапазон
+    // 5. Диапазон
     const meta = config.meta;
     const rangeMinRaw = total * (1 - meta.rangeMinusPercent / 100);
     const rangeMaxRaw = total * (1 + meta.rangePlusPercent / 100);
     const rangeMin = total > 0 ? roundRangeBound(rangeMinRaw, -1, meta) : 0;
     const rangeMax = total > 0 ? roundRangeBound(rangeMaxRaw, 1, meta) : 0;
 
-    // 8. Что уточняется отдельно
+    // 6. Что уточняется отдельно
+    if (equipmentSubtotal > 0 && !installIncluded && installCfg.clarifyNote) clarifyNotes.push(installCfg.clarifyNote);
     if (equipmentSubtotal > 0) clarifyNotes.push(config.services.delivery.clarifyNote);
+    if (kit && wpCount > 1 && meta.multiWorkplaceNote) clarifyNotes.push(meta.multiWorkplaceNote);
     if (state.services && state.services.extendedServiceInterest) {
       clarifyNotes.push(config.services.extendedService.clarifyNote);
     }
@@ -168,7 +180,8 @@ const AmfodentCalculator = (function () {
       installServiceAmount: installServiceAmount,
       installServicePercent: installCfg.percent,
       installServiceMin: installCfg.min,
-      installServiceAtMinimum: equipmentSubtotal > 0 && installByPercent < installCfg.min,
+      installServiceIncluded: installIncluded,
+      installServiceAtMinimum: installIncluded && equipmentSubtotal > 0 && installByPercent < installCfg.min,
       total: total,
       rangeMin: rangeMin,
       rangeMax: rangeMax,
@@ -197,29 +210,39 @@ const AmfodentCalculator = (function () {
     const wp = findById(config.workplaces, state.workplaces);
     add('Рабочие места', wp, wp ? wp.label : 'не выбрано');
 
-    const tier = findById(config.installations.tiers, state.installation && state.installation.tierId);
-    if (tier) {
-      const qty = Math.max(1, parseInt(state.installation.quantity, 10) || 1);
-      const brand = (state.installation.brand || '').trim();
-      add('Установки', tier, tier.label + ' × ' + qty + (brand ? ', бренд: ' + brand : ''));
+    const kit = findById(config.kits, state.kit);
+    if (kit) {
+      const kitOptions = Array.isArray(state.kitOptions) ? state.kitOptions : [];
+      add('Комплект', kit, kit.label);
+      config.kitComponents.forEach(function (comp) {
+        const item = kit.items[comp.id];
+        if (!item) return;
+        const on = comp.required || kitOptions.indexOf(comp.id) !== -1;
+        rows.push({ section: comp.group, id: comp.id, label: on ? item.label : 'не включено' });
+      });
     } else {
-      add('Установки', null, 'не выбрано');
+      add('Комплект', null, 'не выбрано');
     }
 
-    const compressor = findById(config.compressor, state.compressor);
-    add('Компрессор и аспирация', compressor, compressor ? compressor.label : 'не выбрано');
-
-    const sterilization = findById(config.sterilization, state.sterilization);
-    add('Стерилизация', sterilization, sterilization ? sterilization.label : 'не выбрано');
-
-    const xray = findById(config.xray, state.xray);
-    add('Рентгенодиагностика', xray, xray ? xray.label : 'не выбрано');
+    const xraySel = Array.isArray(state.xray) ? state.xray : [];
+    const xrayLabels = config.xray
+      .filter(function (x) { return xraySel.indexOf(x.id) !== -1; })
+      .map(function (x) {
+        if (!x.hasFov) return x.label;
+        const fov = tomographOption(config, state.tomographFov);
+        return x.label + (fov ? ', поле ' + fov.label + (fov.model ? ' (' + fov.model + ')' : '') : '');
+      });
+    rows.push({
+      section: 'Рентген и 3D',
+      id: xraySel.slice(),
+      label: xrayLabels.length ? xrayLabels.join('; ') : 'не выбрано'
+    });
 
     const extras = Array.isArray(state.extras) ? state.extras : [];
     const extraLabels = config.extras
       .filter(function (e) { return extras.indexOf(e.id) !== -1; })
       .map(function (e) { return e.label; });
-    rows.push({
+    if (config.extras.length) rows.push({
       section: 'Дополнительное оснащение',
       id: extras.slice(),
       label: extraLabels.length ? extraLabels.join(', ') : 'не выбрано'
@@ -239,6 +262,7 @@ const AmfodentCalculator = (function () {
     describeConfiguration: describeConfiguration,
     formatMoney: formatMoney,
     workplaceCount: workplaceCount,
+    tomographOption: tomographOption,
     findById: findById
   };
 })();

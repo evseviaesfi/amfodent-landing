@@ -34,6 +34,9 @@ const AMFODENT_CONFIG = {
 
     provisionalNote: 'Часть цен в расчёте предварительная и уточняется по актуальному каталогу.',
 
+    // Показывается в «Уточняется отдельно», если выбрано больше одного рабочего места.
+    multiWorkplaceNote: 'Компрессор и стерилизация для нескольких рабочих мест — мощность и комплектацию подберёт менеджер',
+
     // ID счётчика Яндекс.Метрики. Укажите при интеграции — см. INTEGRATION.md.
     yandexMetrikaCounterId: null
   },
@@ -50,7 +53,7 @@ const AMFODENT_CONFIG = {
       next: 'Далее',
       submit: 'Отправить заявку',
       refill: 'Заполнить заново',
-      reset: 'Сбросить расчёт'
+      reset: 'Рассчитать заново'
     },
 
     panel: {
@@ -79,6 +82,12 @@ const AMFODENT_CONFIG = {
       provisionalTitle: 'Предварительная цена, требует проверки по каталогу',
       recommended: 'подходит по числу мест',
       perWorkplace: 'за рабочее место',
+      perWorkplaceShort: 'по числу мест',
+      alwaysIncluded: 'входит в комплект',
+      chooseKitFirst: 'Сначала выберите комплект на предыдущем шаге.',
+      kitIncluded: 'входит всегда',
+      kitOptional: 'Добавить в расчёт',
+      fovHint: 'Поле обзора выберете после отметки',
       includes: 'Состав',
       optional: '(необязательно)',
       required: '*'
@@ -115,7 +124,7 @@ const AMFODENT_CONFIG = {
       payloadTitle: 'Объект заявки'
     },
 
-    resetConfirm: 'Сбросить все выбранные параметры и начать расчёт заново?'
+    resetConfirm: 'Начать расчёт заново? Выбранные параметры сбросятся.'
   },
 
   // ----- ШАГИ -----
@@ -131,43 +140,31 @@ const AMFODENT_CONFIG = {
       id: 'workplaces',
       nav: 'Рабочие места',
       title: 'Сколько рабочих мест нужно оснастить?',
-      subtitle: 'Число мест влияет на количество установок, подбор компрессора и аспирации.'
+      subtitle: 'Установка, мебель и наконечники считаются на каждое рабочее место.'
     },
     {
-      id: 'installation',
-      nav: 'Установки',
-      title: 'Класс стоматологической установки',
-      subtitle: 'Цена указана за одну установку. Количество по умолчанию равно числу рабочих мест — его можно изменить.'
+      id: 'kit',
+      nav: 'Комплект',
+      title: 'Выберите комплект',
+      subtitle: 'Установка и компрессор входят в любой комплект. Стерилизацию, мебель и наконечники добавите на следующем шаге.'
     },
     {
-      id: 'compressor',
-      nav: 'Компрессор',
-      title: 'Компрессор и аспирация',
-      subtitle: 'Вариант подсказывается по числу рабочих мест — выбор можно изменить вручную.'
-    },
-    {
-      id: 'sterilization',
-      nav: 'Стерилизация',
-      title: 'Стерилизация',
-      subtitle: 'В расширенный комплект входит больше оборудования для полного цикла обработки инструментов.'
+      id: 'composition',
+      nav: 'Состав',
+      title: 'Состав комплекта',
+      subtitle: 'Установка и компрессор входят всегда. Отметьте, что ещё добавить в расчёт.'
     },
     {
       id: 'xray',
-      nav: 'Рентген',
-      title: 'Рентгенодиагностика',
-      subtitle: 'Выберите один вариант — от прицельного рентгена до 3D-томографа.'
-    },
-    {
-      id: 'extras',
-      nav: 'Оснащение',
-      title: 'Дополнительное оснащение',
-      subtitle: 'Можно выбрать несколько позиций. Цены указаны за комплект на кабинет — объём для нескольких рабочих мест уточняется менеджером.'
+      nav: 'Рентген и 3D',
+      title: 'Рентген и 3D-диагностика',
+      subtitle: 'Можно выбрать несколько позиций или пропустить шаг.'
     },
     {
       id: 'services',
       nav: 'Услуги',
       title: 'Монтаж и дополнительные услуги',
-      subtitle: 'Доставка и монтаж считаются отдельно от стоимости оборудования.'
+      subtitle: 'Доставка и монтаж оплачиваются отдельно и не входят в сумму расчёта — их стоимость менеджер укажет в коммерческом предложении.'
     },
     {
       id: 'summary',
@@ -193,61 +190,103 @@ const AMFODENT_CONFIG = {
     { id: '4', label: '4 и более',      count: 4, hint: 'Точное число уточним при согласовании' }
   ],
 
-  // ----- ШАГ 3: стоматологические установки -----
-  installations: {
-    quantityLabel: 'Количество установок',
-    quantityMin: 1,
-    quantityMax: 20,
-    brandLabel: 'Предпочтительный бренд',
-    brandPlaceholder: 'Например: Lifedent, Stern Weber, Siger',
-    tiers: [
-      { id: 'basic',    label: 'Базовая',     price: 420000,  provisional: true, hint: 'Базовый набор функций для терапевтического приёма' },
-      { id: 'standard', label: 'Стандартная', price: 750000,  provisional: true, hint: 'Расширенная комплектация относительно базовой' },
-      { id: 'premium',  label: 'Премиальная', price: 1350000, provisional: true, hint: 'Максимальная комплектация в линейке' }
+  // ----- ШАГИ 3–4: комплекты -----
+  // Состав комплектов — конкретные модели от отдела продаж (Маргарита, октябрь 2026).
+  // Все цены — «от», за единицу.
+  //   required: true  — позиция входит в комплект всегда, без галочки;
+  //   required: false — добавляется галочкой на шаге «Состав».
+  //   scaling: 'perWorkplace' — умножается на число рабочих мест.
+  kitComponents: [
+    { id: 'installation',  group: 'Стоматологическая установка', required: true,  scaling: 'perWorkplace' },
+    { id: 'compressor',    group: 'Компрессор',                  required: true,  scaling: 'once' },
+    { id: 'sterilization', group: 'Стерилизация',                required: false, scaling: 'once' },
+    { id: 'furniture',     group: 'Медицинская мебель',          required: false, scaling: 'perWorkplace' },
+    { id: 'handpieces',    group: 'Наконечники',                 required: false, scaling: 'perWorkplace' }
+  ],
+
+  kits: [
+    {
+      id: 'starter',
+      label: 'Стартовый',
+      items: {
+        installation:  { label: 'Установка Premier 05', price: 270000, priceFrom: true },
+        compressor:    { label: 'Компрессор Mercury HK-1EW-30, 70 л', price: 30000, priceFrom: true },
+        sterilization: { label: 'Комплект стерилизации', price: 130000, priceFrom: true,
+                         includes: ['Автоклав Runyes Wind 23 л', 'Дистиллятор', 'Запечатывающее устройство'] },
+        furniture:     { label: 'Мебель Arkodent 4', price: 88000, priceFrom: true },
+        handpieces:    { label: 'Наконечники Tosi', price: 20200, priceFrom: true,
+                         includes: ['Турбинный', 'Угловой', 'Прямой', 'Воздушный мотор'] }
+      }
+    },
+    {
+      id: 'basic',
+      label: 'Базовый',
+      items: {
+        installation:  { label: 'Установка Kaiser', price: 480000, priceFrom: true },
+        compressor:    { label: 'Компрессор Mercury HK-2EW-35, 100 л', price: 40000, priceFrom: true },
+        sterilization: { label: 'Комплект стерилизации', price: 130000, priceFrom: true,
+                         includes: ['Автоклав Runyes Wind 23 л', 'Дистиллятор', 'Запечатывающее устройство'] },
+        furniture:     { label: 'Мебель Arkodent 3', price: 132000, priceFrom: true },
+        handpieces:    { label: 'Наконечники Tosi', price: 20200, priceFrom: true,
+                         includes: ['Турбинный', 'Угловой', 'Прямой', 'Воздушный мотор'] }
+      }
+    },
+    {
+      id: 'optimum',
+      label: 'Надёжный оптимум',
+      items: {
+        installation:  { label: 'Установка Stern Weber S200 Continental', price: 900000, priceFrom: true },
+        compressor:    { label: 'Компрессор Lifedent SP075', price: 110000, priceFrom: true },
+        sterilization: { label: 'Расширенный комплект стерилизации', price: 230000, priceFrom: true,
+                         includes: ['Автоклав Stern Weber SW-22', 'Дистиллятор', 'Запечатывающее устройство', 'Аппарат для чистки и смазки наконечников'] },
+        furniture:     { label: 'Мебель Arkodent 3', price: 132000, priceFrom: true },
+        handpieces:    { label: 'Наконечники Sirona', price: 70000, priceFrom: true,
+                         includes: ['Турбинный', 'Угловой', 'Прямой'] }
+      }
+    },
+    {
+      id: 'premium',
+      label: 'Премиум',
+      items: {
+        installation:  { label: 'Установка Stern Weber S380 TRC', price: 1400000, priceFrom: true },
+        compressor:    { label: 'Компрессор Lifedent SP075', price: 110000, priceFrom: true },
+        sterilization: { label: 'Расширенный комплект стерилизации', price: 230000, priceFrom: true,
+                         includes: ['Автоклав Stern Weber SW-22', 'Дистиллятор', 'Запечатывающее устройство', 'Аппарат для чистки и смазки наконечников'] },
+        furniture:     { label: 'Мебель Arkodent 1', price: 190000, priceFrom: true },
+        handpieces:    { label: 'Наконечники Sirona', price: 70000, priceFrom: true,
+                         includes: ['Турбинный', 'Угловой', 'Прямой'] }
+      }
+    }
+  ],
+
+  // ----- ШАГ 5: рентген и 3D (множественный выбор) -----
+  // hasFov: true — у позиции есть выбор поля обзора (см. tomographFov ниже).
+  xray: [
+    { id: 'portable',   label: 'Портативный рентген Genoray Port-X IVe', price: 140000, priceFrom: true },
+    { id: 'wall',       label: 'Настенный рентген MyRay RXDC eXtend',    price: 130000, priceFrom: true },
+    { id: 'visiograph', label: 'Радиовизиограф MyRay Zen-X HD',          price: 120000, priceFrom: true },
+    { id: 'tomograph',  label: '3D-томограф', hasFov: true }
+  ],
+
+  // Цены томографов указаны вместе с цефалостатом (к полю 10×10 он не подходит),
+  // поэтому отдельно цефалостат не выделяем — по словам отдела продаж.
+  tomographFov: {
+    label: 'Поле обзора',
+    options: [
+      { id: '10x10', label: '10×10 см', model: 'MyRay Hyperion X5',     price: 2100000, priceFrom: true },
+      { id: '11x13', label: '11×13 см', model: 'MyRay Hyperion X9',     price: 3200000, priceFrom: true },
+      { id: '13x16', label: '13×16 см', model: 'MyRay Hyperion X9 PRO', price: 3500000, priceFrom: true },
+      { id: '16x18', label: '16×18 см', model: '',                      price: 3900000, priceFrom: true }
     ]
   },
 
-  // ----- ШАГ 4: компрессор и аспирация -----
-  // Цены — ориентир по действующему прайсу сайта Амфодент (компрессор + аспирация
-  // считаются здесь одной позицией на кабинет, отдельно на сайте они не суммируются).
-  compressor: [
-    { id: 'none',      label: 'Не нужны',              price: 0,      provisional: false, recommendedFor: [] },
-    { id: 'one',       label: 'Для 1 рабочего места',  price: 180000, provisional: true,  recommendedFor: [1] },
-    { id: 'two_three', label: 'Для 2–3 рабочих мест',  price: 320000, provisional: true,  recommendedFor: [2, 3] },
-    { id: 'central',   label: 'Центральная система',   price: 600000, provisional: true,  priceFrom: true, recommendedFor: [4] }
-  ],
+  // ----- ШАГ 6: дополнительное оснащение (множественный выбор) -----
+  // Пока убрано по решению отдела продаж (октябрь 2026): лампа, хирургия,
+  // микроскоп, сканер, расходники. Чтобы вернуть — заполнить список и вернуть
+  // шаг { id: 'extras' } в steps.
+  extras: [],
 
-  // ----- ШАГ 5: стерилизация -----
-  sterilization: [
-    { id: 'none',     label: 'Не нужна',                        price: 0,      provisional: false, includes: [] },
-    { id: 'basic',    label: 'Базовый комплект',                price: 320000, provisional: true,
-      includes: ['Автоклав класса B', 'Ультразвуковая мойка'] },
-    { id: 'extended', label: 'Расширенная стерилизационная',    price: 580000, provisional: true,
-      includes: ['Автоклав класса B', 'Ультразвуковая мойка', 'Запечатывающая машина', 'Дистиллятор'] }
-  ],
-
-  // ----- ШАГ 6: рентгенодиагностика -----
-  xray: [
-    { id: 'none',       label: 'Без оборудования',    price: 0,       provisional: false },
-    { id: 'xray',       label: 'Рентген',             price: 230000,  provisional: true },
-    { id: 'visiograph', label: 'Визиограф',           price: 190000,  provisional: true },
-    { id: 'xray_visio', label: 'Рентген + визиограф', price: 330000,  provisional: true },
-    { id: 'panoramic',  label: 'Панорамный аппарат',  price: 1900000, provisional: true },
-    { id: 'tomograph',  label: '3D-томограф',         price: 3400000, provisional: true }
-  ],
-
-  // ----- ШАГ 7: дополнительное оснащение (множественный выбор) -----
-  extras: [
-    { id: 'furniture',   label: 'Мебель кабинета',                        price: 150000,  provisional: true, scaling: 'once' },
-    { id: 'handpieces',  label: 'Наконечники и микромоторы',              price: 45000,   provisional: true, scaling: 'once' },
-    { id: 'lamp',        label: 'Полимеризационная лампа',                price: 35000,   provisional: true, scaling: 'once' },
-    { id: 'surgery',     label: 'Хирургическое оборудование',             price: 350000,  provisional: true, scaling: 'once' },
-    { id: 'microscope',  label: 'Стоматологический микроскоп',            price: 1200000, provisional: true, priceFrom: true, scaling: 'once' },
-    { id: 'scanner',     label: 'Интраоральный сканер',                   price: 1000000, provisional: true, scaling: 'once' },
-    { id: 'consumables', label: 'Стартовый комплект расходных материалов', price: 150000,  provisional: true, scaling: 'once' }
-  ],
-
-  // ----- ШАГ 8: услуги -----
+  // ----- ШАГ 7: услуги -----
   services: {
     delivery: {
       label: 'Доставка',
@@ -258,7 +297,11 @@ const AMFODENT_CONFIG = {
       label: 'Монтаж и ввод в эксплуатацию',
       percent: 8,
       min: 80000,
-      note: '8% от стоимости оборудования, но не менее 80 000 ₽',
+      // false — монтаж не прибавляется к сумме, а считается отдельно (решение отдела продаж).
+      includedInTotal: false,
+      note: 'Оплачивается отдельно — стоимость менеджер укажет в коммерческом предложении.',
+      clarifyNote: 'Монтаж и ввод в эксплуатацию — оплачиваются отдельно',
+      separateLabel: 'оплачивается отдельно',
       currentPrefix: 'по текущему расчёту'
     },
     warrantyInfo: {

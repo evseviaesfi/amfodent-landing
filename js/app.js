@@ -20,6 +20,10 @@
  *   2) window.AmfodentCalculatorApp.presetGoal(goalId) — позволяет блоку
  *      «Три задачи кабинета» на лендинге предвыбрать шаг «Задача» до того,
  *      как посетитель долистает до калькулятора.
+ *   3) Октябрь 2026, по схеме отдела продаж: вместо выбора «класса установки»,
+ *      компрессора и стерилизации по отдельности — выбор готового комплекта
+ *      (шаг «Комплект»), его состав с галочками (шаг «Состав») и рентген/3D
+ *      с множественным выбором и полем обзора томографа (шаг «Рентген и 3D»).
  *   Токен бота — секрет уровня «страница у всех на виду», а не уровня CRM:
  *   он ограничен только отправкой сообщений в один чат. Для реальной
  *   интеграции в OpenCart замените этот блок на LEAD_ENDPOINT с серверным
@@ -164,10 +168,10 @@
       step: 1,
       goal: null,
       workplaces: null,
-      installation: { tierId: null, quantity: 1, quantityTouched: false, brand: '' },
-      compressor: firstId(C.compressor),        // первая опция в config — «Не нужны»
-      sterilization: firstId(C.sterilization),
-      xray: firstId(C.xray),
+      kit: null,
+      kitOptions: [],        // id необязательных позиций комплекта, отмеченных галочкой
+      xray: [],              // id позиций рентгена и 3D
+      tomographFov: firstId(C.tomographFov.options),
       extras: [],
       services: { extendedServiceInterest: false },
       contact: { name: '', phone: '', email: '', city: '', contactMethod: null, comment: '', consent: false },
@@ -185,11 +189,16 @@
     return maxLength ? s.slice(0, maxLength) : s;
   }
 
-  function clampQuantity(value) {
-    const cfg = C.installations;
-    let n = parseInt(value, 10);
-    if (!isFinite(n)) n = cfg.quantityMin || 1;
-    return Math.min(Math.max(n, cfg.quantityMin || 1), cfg.quantityMax || 20);
+  /** Оставляет из списка только id, которые есть в списке config (в порядке config). */
+  function validIds(list, values) {
+    const arr = Array.isArray(values) ? values : [];
+    return (list || [])
+      .filter(function (item) { return arr.indexOf(item.id) !== -1; })
+      .map(function (item) { return item.id; });
+  }
+
+  function optionalComponents() {
+    return C.kitComponents.filter(function (c) { return !c.required; });
   }
 
   /**
@@ -204,20 +213,11 @@
     s.goal = validId(C.goals, saved.goal);
     s.workplaces = validId(C.workplaces, saved.workplaces);
 
-    const inst = saved.installation || {};
-    s.installation.tierId = validId(C.installations.tiers, inst.tierId);
-    s.installation.quantity = clampQuantity(inst.quantity);
-    s.installation.quantityTouched = !!inst.quantityTouched;
-    s.installation.brand = str(inst.brand, 120);
-
-    s.compressor = validId(C.compressor, saved.compressor) || s.compressor;
-    s.sterilization = validId(C.sterilization, saved.sterilization) || s.sterilization;
-    s.xray = validId(C.xray, saved.xray) || s.xray;
-
-    const savedExtras = Array.isArray(saved.extras) ? saved.extras : [];
-    s.extras = C.extras
-      .filter(function (e) { return savedExtras.indexOf(e.id) !== -1; })
-      .map(function (e) { return e.id; });
+    s.kit = validId(C.kits, saved.kit);
+    s.kitOptions = validIds(optionalComponents(), saved.kitOptions);
+    s.xray = validIds(C.xray, saved.xray);
+    s.tomographFov = validId(C.tomographFov.options, saved.tomographFov) || s.tomographFov;
+    s.extras = validIds(C.extras, saved.extras);
 
     s.services.extendedServiceInterest = !!(saved.services && saved.services.extendedServiceInterest);
 
@@ -280,7 +280,7 @@
     switch (id) {
       case 'goal':         return !!st.goal;
       case 'workplaces':   return !!st.workplaces;
-      case 'installation': return !!st.installation.tierId && st.installation.quantity > 0;
+      case 'kit':          return !!st.kit;
       default:             return true;
     }
   }
@@ -440,63 +440,105 @@
     }).join('') + '</div>';
   }
 
-  function renderStepInstallation() {
-    const cfg = C.installations;
-    const tiers = cfg.tiers.map(function (t) {
-      return optionCard({
-        type: 'radio', name: 'installation_tier', value: t.id,
-        checked: state.installation.tierId === t.id,
-        title: t.label, price: priceHtml(t), meta: t.hint
-      });
-    }).join('');
-
-    return '<div class="option-grid option-grid--3">' + tiers + '</div>' +
-      '<div class="field-row field-row--spaced">' +
-      '<label class="field field--narrow">' +
-      '<span class="field__label">' + escapeHtml(cfg.quantityLabel) + '</span>' +
-      '<input type="number" inputmode="numeric" id="installation-qty" ' +
-      'min="' + cfg.quantityMin + '" max="' + cfg.quantityMax + '" step="1" ' +
-      'value="' + state.installation.quantity + '">' +
-      '</label>' +
-      '<label class="field">' +
-      '<span class="field__label">' + escapeHtml(cfg.brandLabel) +
-      ' <span class="field__optional">' + escapeHtml(LBL.optional) + '</span></span>' +
-      '<input type="text" id="installation-brand" maxlength="120" ' +
-      'placeholder="' + escapeHtml(cfg.brandPlaceholder) + '" ' +
-      'value="' + escapeHtml(state.installation.brand) + '">' +
-      '</label></div>';
+  function kitItem(comp) {
+    const kit = AmfodentCalculator.findById(C.kits, state.kit);
+    return kit ? kit.items[comp.id] : null;
   }
 
-  function renderStepCompressor() {
-    const wpCount = AmfodentCalculator.workplaceCount(C, state.workplaces);
-    return '<div class="option-grid option-grid--list">' + C.compressor.map(function (item) {
-      const recommended = wpCount > 0 && item.recommendedFor &&
-        item.recommendedFor.indexOf(wpCount) !== -1;
+  function includesText(item) {
+    return (item.includes && item.includes.length) ? LBL.includes + ': ' + item.includes.join(', ') : '';
+  }
+
+  function perWorkplaceTag(comp) {
+    const n = AmfodentCalculator.workplaceCount(C, state.workplaces);
+    return (comp.scaling === 'perWorkplace' && n > 1) ? tag('× ' + n + ' ' + LBL.perWorkplaceShort, 'reco') : '';
+  }
+
+  function renderStepKit() {
+    return '<div class="option-grid option-grid--kits">' + C.kits.map(function (k) {
+      const base = C.kitComponents
+        .filter(function (c) { return c.required && k.items[c.id]; })
+        .reduce(function (sum, c) { return sum + k.items[c.id].price; }, 0);
+      const meta = C.kitComponents
+        .filter(function (c) { return c.required && k.items[c.id]; })
+        .map(function (c) { return k.items[c.id].label; })
+        .join(' + ');
       return optionCard({
-        type: 'radio', name: 'compressor', value: item.id, checked: state.compressor === item.id,
-        title: item.label, price: priceHtml(item),
-        tags: recommended ? tag(LBL.recommended, 'reco') : ''
+        type: 'radio', name: 'kit', value: k.id, checked: state.kit === k.id,
+        title: k.label,
+        price: '<span class="price">от ' + money(base) + '</span>',
+        meta: meta
       });
     }).join('') + '</div>';
   }
 
-  function renderStepSterilization() {
-    return '<div class="option-grid option-grid--list">' + C.sterilization.map(function (item) {
-      const includes = (item.includes && item.includes.length)
-        ? LBL.includes + ': ' + item.includes.join(', ') : null;
-      return optionCard({
-        type: 'radio', name: 'sterilization', value: item.id, checked: state.sterilization === item.id,
-        title: item.label, price: priceHtml(item), meta: includes
-      });
-    }).join('') + '</div>';
+  /** Карточка позиции, которая входит в комплект всегда — без галочки. */
+  function fixedCard(title, priceHtmlStr, meta, tags) {
+    return '<div class="option is-checked is-fixed">' +
+      '<span class="option__box" aria-hidden="true"></span>' +
+      '<span class="option__body">' +
+      '<span class="option__head"><span class="option__title">' + escapeHtml(title) + '</span>' +
+      '<span class="option__price">' + priceHtmlStr + '</span></span>' +
+      (meta ? '<span class="option__meta">' + escapeHtml(meta) + '</span>' : '') +
+      '<span class="option__tags">' + tag(LBL.alwaysIncluded, 'fixed') + (tags || '') + '</span>' +
+      '</span></div>';
+  }
+
+  function renderStepComposition() {
+    const kit = AmfodentCalculator.findById(C.kits, state.kit);
+    if (!kit) return '<p class="empty-note">' + escapeHtml(LBL.chooseKitFirst) + '</p>';
+
+    const fixed = C.kitComponents.filter(function (c) { return c.required && kit.items[c.id]; })
+      .map(function (c) {
+        const item = kit.items[c.id];
+        return fixedCard(item.label, priceHtml(item), includesText(item), perWorkplaceTag(c));
+      }).join('');
+
+    const optional = optionalComponents().filter(function (c) { return kit.items[c.id]; })
+      .map(function (c) {
+        const item = kit.items[c.id];
+        return optionCard({
+          type: 'checkbox', name: 'kit_option', value: c.id,
+          checked: state.kitOptions.indexOf(c.id) !== -1,
+          title: item.label, price: priceHtml(item), meta: includesText(item),
+          tags: perWorkplaceTag(c)
+        });
+      }).join('');
+
+    return '<p class="step__group-label">' + escapeHtml(kit.label) + ' — ' + escapeHtml(LBL.kitIncluded) + '</p>' +
+      '<div class="option-grid option-grid--list">' + fixed + '</div>' +
+      '<p class="step__group-label">' + escapeHtml(LBL.kitOptional) + '</p>' +
+      '<div class="option-grid option-grid--list">' + optional + '</div>';
   }
 
   function renderStepXray() {
+    const fovCfg = C.tomographFov;
     return '<div class="option-grid option-grid--list">' + C.xray.map(function (item) {
-      return optionCard({
-        type: 'radio', name: 'xray', value: item.id, checked: state.xray === item.id,
-        title: item.label, price: priceHtml(item)
+      const checked = state.xray.indexOf(item.id) !== -1;
+      if (!item.hasFov) {
+        return optionCard({
+          type: 'checkbox', name: 'xray', value: item.id, checked: checked,
+          title: item.label, price: priceHtml(item)
+        });
+      }
+      const minPrice = Math.min.apply(null, fovCfg.options.map(function (o) { return o.price; }));
+      const card = optionCard({
+        type: 'checkbox', name: 'xray', value: item.id, checked: checked,
+        title: item.label, price: '<span class="price">от ' + money(minPrice) + '</span>',
+        meta: checked ? null : LBL.fovHint
       });
+      if (!checked) return card;
+      const fovs = fovCfg.options.map(function (o) {
+        return optionCard({
+          type: 'radio', name: 'tomograph_fov', value: o.id,
+          checked: state.tomographFov === o.id,
+          title: o.label, price: priceHtml(o), meta: o.model || null
+        });
+      }).join('');
+      return card +
+        '<div class="option-sub">' +
+        '<p class="step__group-label">' + escapeHtml(fovCfg.label) + '</p>' +
+        '<div class="option-grid option-grid--compact">' + fovs + '</div></div>';
     }).join('') + '</div>';
   }
 
@@ -524,7 +566,9 @@
         '</div>';
     }
 
-    const installValue = c.equipmentSubtotal > 0
+    const installValue = !c.installServiceIncluded
+      ? '<span class="service-row__pending">' + escapeHtml(C.services.installService.separateLabel) + '</span>'
+      : c.equipmentSubtotal > 0
       ? '<span class="price price--lg">' + money(c.installServiceAmount) + '</span>' +
         '<span class="price__unit">' + escapeHtml(svc.installService.currentPrefix) + '</span>'
       : '<span class="service-row__pending">—</span>';
@@ -581,9 +625,12 @@
       '<tfoot>' +
       '<tr><td colspan="3">' + escapeHtml(installLabel) + '</td>' +
       '<td class="num">' + money(c.equipmentSubtotal) + '</td></tr>' +
-      '<tr><td colspan="3">' + escapeHtml(C.services.installService.label) +
-      ' <span class="breakdown__hint">' + escapeHtml(installNote) + '</span></td>' +
-      '<td class="num">' + money(c.installServiceAmount) + '</td></tr>' +
+      (c.installServiceIncluded
+        ? '<tr><td colspan="3">' + escapeHtml(C.services.installService.label) +
+          ' <span class="breakdown__hint">' + escapeHtml(installNote) + '</span></td>' +
+          '<td class="num">' + money(c.installServiceAmount) + '</td></tr>'
+        : '<tr><td colspan="3">' + escapeHtml(C.services.installService.label) + '</td>' +
+          '<td class="num">' + escapeHtml(C.services.installService.separateLabel) + '</td></tr>') +
       '<tr class="breakdown__total"><td colspan="3">' + escapeHtml(LBL.grandTotal) + '</td>' +
       '<td class="num">' + money(c.total) + '</td></tr>' +
       '</tfoot></table></div>';
@@ -725,9 +772,8 @@
     const stepFns = {
       goal: renderStepGoal,
       workplaces: renderStepWorkplaces,
-      installation: renderStepInstallation,
-      compressor: renderStepCompressor,
-      sterilization: renderStepSterilization,
+      kit: renderStepKit,
+      composition: renderStepComposition,
       xray: renderStepXray,
       extras: renderStepExtras,
       services: renderStepServices,
@@ -776,7 +822,7 @@
       '<div class="panel__row"><span>' + escapeHtml(P.equipment) + '</span><span>' +
       money(c.equipmentSubtotal) + '</span></div>' +
       '<div class="panel__row"><span>' + escapeHtml(P.install) + '</span><span>' +
-      money(c.installServiceAmount) + '</span></div>' +
+      (c.installServiceIncluded ? money(c.installServiceAmount) : escapeHtml(C.services.installService.separateLabel)) + '</span></div>' +
       '</div>' +
       '<div class="panel__total">' +
       '<span class="panel__total-label">' + escapeHtml(P.total) + '</span>' +
@@ -870,31 +916,6 @@
         input.addEventListener('change', function () { handleOptionChange(stepId, input); });
       });
 
-    const qty = document.getElementById('installation-qty');
-    if (qty) {
-      qty.addEventListener('input', function () {
-        // Во время ввода не «дёргаем» поле: пустое значение допускаем,
-        // в расчёте используем безопасный минимум.
-        state.installation.quantityTouched = true;
-        state.installation.quantity = clampQuantity(qty.value);
-        persist();
-        trackOptionChange('installation_quantity', state.installation.quantity);
-        updateSummaries();
-      });
-      qty.addEventListener('blur', function () {
-        qty.value = state.installation.quantity; // нормализуем «5abc», «0», «999»
-      });
-    }
-
-    const brand = document.getElementById('installation-brand');
-    if (brand) {
-      brand.addEventListener('input', function () {
-        state.installation.brand = brand.value;
-        persist();
-        updateSummaries();
-      });
-    }
-
     const back = document.getElementById('btn-back');
     if (back) back.addEventListener('click', function () { goToStep(state.step - 1); });
 
@@ -942,7 +963,14 @@
     AmfodentAnalytics.trackEvent('optionChange', { field: field, value: value });
   }
 
+  function toggleInList(list, value, on) {
+    const idx = list.indexOf(value);
+    if (on && idx === -1) list.push(value);
+    if (!on && idx !== -1) list.splice(idx, 1);
+  }
+
   function handleOptionChange(stepId, input) {
+    let rerenderStep = false;
     switch (input.name) {
       case 'goal':
         state.goal = input.value;
@@ -951,34 +979,31 @@
 
       case 'workplaces':
         state.workplaces = input.value;
-        // Количество установок подстраивается, пока пользователь не задал его сам.
-        if (!state.installation.quantityTouched) {
-          state.installation.quantity = clampQuantity(
-            AmfodentCalculator.workplaceCount(C, state.workplaces)
-          );
-        }
-        autoSuggestCompressor();
         trackOptionChange('workplaces', input.value);
         break;
 
-      case 'installation_tier':
-        state.installation.tierId = input.value;
-        trackOptionChange('installation_tier', input.value);
+      case 'kit':
+        state.kit = input.value;
+        trackOptionChange('kit', input.value);
         break;
 
-      case 'compressor':
-        state.compressor = input.value;
-        trackOptionChange('compressor', input.value);
-        break;
-
-      case 'sterilization':
-        state.sterilization = input.value;
-        trackOptionChange('sterilization', input.value);
+      case 'kit_option':
+        toggleInList(state.kitOptions, input.value, input.checked);
+        state.kitOptions = validIds(optionalComponents(), state.kitOptions);
+        trackOptionChange('kit_options', state.kitOptions.join(',') || 'none');
         break;
 
       case 'xray':
-        state.xray = input.value;
-        trackOptionChange('xray', input.value);
+        toggleInList(state.xray, input.value, input.checked);
+        state.xray = validIds(C.xray, state.xray);
+        trackOptionChange('xray', state.xray.join(',') || 'none');
+        // У томографа появляется/скрывается выбор поля обзора — нужен перерендер шага.
+        if (input.value === 'tomograph') rerenderStep = true;
+        break;
+
+      case 'tomograph_fov':
+        state.tomographFov = input.value;
+        trackOptionChange('tomograph_fov', input.value);
         break;
 
       case 'extras': {
@@ -1010,6 +1035,14 @@
     }
 
     persist();
+
+    if (rerenderStep) {
+      renderStep();
+      updateSummaries();
+      const again = stepContainer.querySelector('input[name="' + input.name + '"][value="' + input.value + '"]');
+      if (again) again.focus({ preventScroll: true });
+      return;
+    }
 
     // Точечное обновление вместо перерисовки шага: не теряется фокус,
     // не сбрасывается позиция прокрутки и введённый текст.
@@ -1044,17 +1077,6 @@
     const c = calc();
     const holder = stepContainer.querySelectorAll('.service-row__value .price--lg')[0];
     if (holder) holder.textContent = money(c.installServiceAmount);
-  }
-
-  function autoSuggestCompressor() {
-    // Не перезаписываем осознанный выбор: подсказываем только пока стоит
-    // первый (нулевой) вариант из config.
-    if (state.compressor !== firstId(C.compressor)) return;
-    const wpCount = AmfodentCalculator.workplaceCount(C, state.workplaces);
-    const match = C.compressor.filter(function (item) {
-      return item.recommendedFor && item.recommendedFor.indexOf(wpCount) !== -1;
-    })[0];
-    if (match) state.compressor = match.id;
   }
 
   function isEmailRequired() {
@@ -1233,7 +1255,7 @@
 
     return {
       source: 'amfodent_calculator',
-      formVersion: 1,
+      formVersion: 2,
 
       contact: {
         name: state.contact.name.trim(),
@@ -1253,15 +1275,10 @@
           label: labelOf(C.workplaces, state.workplaces),
           count: c.workplaceCount || null
         },
-        installation: {
-          tierId: state.installation.tierId,
-          tierLabel: labelOf(C.installations.tiers, state.installation.tierId),
-          quantity: state.installation.quantity,
-          brand: state.installation.brand.trim() || null
-        },
-        compressor: { id: state.compressor, label: labelOf(C.compressor, state.compressor) },
-        sterilization: { id: state.sterilization, label: labelOf(C.sterilization, state.sterilization) },
-        xray: { id: state.xray, label: labelOf(C.xray, state.xray) },
+        kit: { id: state.kit, label: labelOf(C.kits, state.kit) },
+        kitOptions: state.kitOptions.slice(),
+        xray: state.xray.slice(),
+        tomographFov: state.xray.indexOf('tomograph') !== -1 ? state.tomographFov : null,
         extras: C.extras
           .filter(function (e) { return state.extras.indexOf(e.id) !== -1; })
           .map(function (e) { return { id: e.id, label: e.label }; }),
@@ -1290,6 +1307,7 @@
           percent: c.installServicePercent,
           min: c.installServiceMin,
           amount: Math.round(c.installServiceAmount),
+          includedInTotal: c.installServiceIncluded,
           atMinimum: c.installServiceAtMinimum
         },
         total: Math.round(c.total),
@@ -1392,53 +1410,20 @@
   }
 
   /**
-   * ЛЕНДИНГ-MVP: пресеты для блока «Готовые комплекты». Каждый пресет — это
-   * реальный набор выбора в терминах config.js (не отдельные «фиксированные
-   * цены комплекта»), поэтому показанная в итоге сумма всегда посчитана тем
-   * же движком, что и в остальном калькуляторе, и меняется вместе с ценами
-   * в config.js. Ориентиры диапазонов подобраны так, чтобы после калибровки
-   * цен (см. INTEGRATION.md) примерно совпадать с карточками на лендинге —
-   * см. описание в SETUP.md.
+   * ЛЕНДИНГ-MVP: кнопки блока «Готовые комплекты» (data-kit) вызывают
+   * presetKit(id) — id совпадают с C.kits в config.js.
    */
-  const KIT_PRESETS = {
-    starter: {
-      goal: 'new', workplaces: '1', tierId: 'basic', quantity: 1,
-      compressor: 'one', sterilization: 'basic', xray: 'none',
-      extras: ['furniture', 'handpieces']
-    },
-    optimal: {
-      goal: 'new', workplaces: '1', tierId: 'standard', quantity: 1,
-      compressor: 'one', sterilization: 'basic', xray: 'xray_visio',
-      extras: ['furniture', 'handpieces']
-    },
-    pro: {
-      goal: 'new', workplaces: '1', tierId: 'premium', quantity: 1,
-      compressor: 'two_three', sterilization: 'extended', xray: 'xray_visio',
-      extras: ['furniture', 'handpieces', 'surgery']
-    },
-    pro3d: {
-      goal: 'new', workplaces: '1', tierId: 'premium', quantity: 1,
-      compressor: 'two_three', sterilization: 'extended', xray: 'tomograph',
-      extras: ['furniture', 'handpieces', 'microscope']
-    }
-  };
-
+  // Пресет комплекта: выбирает комплект и открывает шаг «Состав», где посетитель
+  // сам отмечает стерилизацию, мебель и наконечники. Цена считается тем же
+  // движком, что и в остальном калькуляторе.
   function presetKit(kitId) {
-    const kit = KIT_PRESETS[kitId];
-    if (!kit) return;
-    state.goal = validId(C.goals, kit.goal) || state.goal;
-    state.workplaces = validId(C.workplaces, kit.workplaces) || state.workplaces;
-    state.installation.tierId = validId(C.installations.tiers, kit.tierId) || state.installation.tierId;
-    state.installation.quantity = clampQuantity(kit.quantity);
-    state.installation.quantityTouched = true;
-    state.compressor = validId(C.compressor, kit.compressor) || state.compressor;
-    state.sterilization = validId(C.sterilization, kit.sterilization) || state.sterilization;
-    state.xray = validId(C.xray, kit.xray) || state.xray;
-    state.extras = C.extras
-      .filter(function (e) { return kit.extras.indexOf(e.id) !== -1; })
-      .map(function (e) { return e.id; });
+    if (!validId(C.kits, kitId)) return;
+    state.goal = state.goal || 'new';
+    state.workplaces = state.workplaces || '1';
+    state.kit = kitId;
     persist();
-    goToStep(STEPS.length); // сразу на «Итог и заявка» — с реально посчитанной суммой
+    const compositionStep = STEPS.map(function (s) { return s.id; }).indexOf('composition') + 1;
+    goToStep(compositionStep || STEPS.length);
   }
 
   // Точка доступа для отладки и для интеграции (например, чтобы прочитать
