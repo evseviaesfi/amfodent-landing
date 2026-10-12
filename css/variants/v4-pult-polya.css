@@ -1,0 +1,273 @@
+/* ВАРИАНТ «ПУЛЬТ + ЦВЕТОВЫЕ ПОЛЯ»
+   Из «Пульта»: тёмная панель выбора комплекта и калькулятора, зелёные индикаторы,
+   моноширинные цифры. Из «Цветовых полей»: трёхцветная лента под шапкой,
+   зелёное поле «Что входит», красный финал. Пульт окрашен в глубокий фирменный
+   синий, со знаком на фоне. */
+:root { --bg: #E1E7EB; --amf-led: #4CC35A; --font-num: "JetBrains Mono", ui-monospace, monospace; }
+body { background: var(--bg); }
+.lp-header { background: rgba(225, 231, 235, 0.9); }
+.lp-hero-cinematic__scrim-h { background: linear-gradient(90deg, rgba(225,231,235,0.9) 0%, rgba(225,231,235,0.6) 32%, rgba(225,231,235,0.05) 58%, rgba(225,231,235,0.2) 100%); }
+.lp-hero-cinematic__scrim-v { background: linear-gradient(180deg, rgba(225,231,235,0.5) 0%, rgba(225,231,235,0) 26%, rgba(225,231,235,0.2) 64%, #E1E7EB 100%); }
+
+/* панель выбора комплекта */
+.lp-picker {
+  background: linear-gradient(165deg, #1A4469 0%, #11294A 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 40px 80px -40px rgba(10, 25, 40, 0.75), inset 0 1px 0 rgba(255,255,255,0.08);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+.lp-picker__kicker { color: var(--amf-led); display: flex; align-items: center; gap: 8px; }
+.lp-picker__kicker::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--amf-led); box-shadow: 0 0 10px var(--amf-led); }
+.lp-picker__title { color: #FFFFFF; }
+.lp-picker__name { color: #EAF1F6; }
+.lp-picker__meta, .lp-picker__price, .lp-picker__note { color: rgba(234,241,246,0.55); }
+.lp-picker__price b { color: #FFFFFF; font-family: var(--font-num); font-weight: 500; font-size: 14px; }
+.lp-picker__row:hover { background: rgba(255,255,255,0.05); }
+.lp-picker__dot { background: transparent; border-color: rgba(255,255,255,0.3); }
+.lp-picker__row:has(input:checked) { background: rgba(76,195,90,0.1); border-color: rgba(76,195,90,0.55); box-shadow: none; }
+.lp-picker__row:has(input:checked) .lp-picker__dot { border: 4px solid var(--amf-led); box-shadow: 0 0 12px rgba(76,195,90,0.7); }
+.lp-picker__badge { background: rgba(76,195,90,0.18); color: var(--amf-led); }
+.lp-picker__foot { border-top: 1px solid rgba(255,255,255,0.08); margin-top: 10px; padding-top: 14px; }
+
+/* калькулятор — тот же пульт во всю ширину */
+.lp-calc-wrap {
+  --ink: #EAF1F6; --ink-soft: rgba(234,241,246,0.74); --ink-faint: rgba(234,241,246,0.5);
+  --surface: rgba(255,255,255,0.05); --surface-alt: rgba(255,255,255,0.03); --surface-sunken: rgba(255,255,255,0.09);
+  --line: rgba(255,255,255,0.1); --line-strong: rgba(255,255,255,0.22);
+  --accent: #4CC35A; --accent-dark: #3FA84A; --accent-soft: rgba(76,195,90,0.1);
+  background: linear-gradient(160deg, #1B4F7E 0%, #13325A 55%, #10243A 100%);
+  color: var(--ink);
+  margin: 0 16px; border-radius: 48px 48px 48px 12px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 40px 80px -50px rgba(10, 25, 40, 0.8);
+}
+.lp-calc-wrap .calc-header__brand { background: rgba(76,195,90,0.15); color: var(--amf-led); }
+.lp-calc-wrap .option.is-checked .option__box { box-shadow: inset 0 0 0 3px #13293F; }
+.lp-calc-wrap .option.is-checked { box-shadow: 0 0 0 1px rgba(76,195,90,0.4), 0 0 24px -8px rgba(76,195,90,0.5); }
+.lp-calc-wrap .disclaimer, .lp-calc-wrap .lp-note { color: #E8D8A8; background: rgba(224,178,74,0.1); }
+.lp-calc-wrap .price, .lp-calc-wrap .panel__total-value, .lp-calc-wrap .option__price, .lp-calc-wrap .breakdown .num { font-family: var(--font-num); }
+.lp-calc-wrap .btn--primary { background: var(--amf-red); color: #FFFFFF; }
+.lp-calc-wrap .btn--primary:hover:not(:disabled) { background: var(--amf-red-dark); }
+.lp-calc-wrap .btn--primary:disabled { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.5); }
+.lp-calc-wrap .progress__item.is-active .progress__dot { box-shadow: 0 0 10px rgba(76,195,90,0.7); color: #10243A; }
+.lp-calc-wrap .calc-summary .panel { background-image: none; }
+
+/* зелёные «индикаторы» в остальной странице */
+.lp-eq-icon::after { background: var(--amf-led) !important; border-radius: 50%; width: 8px; height: 8px; top: 4px; right: 4px; box-shadow: 0 0 8px rgba(76,195,90,0.8); }
+.lp-kit__list li::marker, .lp-kit li::marker { color: var(--amf-led); }
+.lp-kit__price { font-family: var(--font-num); font-weight: 500; }
+
+.lp-calc-wrap::before {
+  content: ''; position: absolute; right: -90px; top: -70px; width: 460px; height: 440px;
+  background: url("../../images/logo-mark.svg") no-repeat center / contain; opacity: 0.07; transform: rotate(-12deg);
+  pointer-events: none;
+}
+.lp-calc-wrap .calc { position: relative; }
+.lp-calc-wrap .option.is-checked .option__box { box-shadow: inset 0 0 0 3px #15365A; }
+@media (max-width: 640px) {
+  .lp-calc-wrap { margin: 0 8px; border-radius: 32px 32px 32px 8px; }
+  #offer { margin: 16px 8px; border-radius: 32px 32px 8px 32px; }
+  .lp-calc-wrap::before { width: 260px; height: 250px; right: -80px; top: -40px; }
+}
+
+/* ---------- из «Цветовых полей» ---------- */
+.lp-header { border-bottom: none; }
+.lp-header::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 4px;
+  background: linear-gradient(90deg, #1C8FD6 0 40%, #E8423A 40% 80%, #3FA84A 80% 100%);
+}
+.lp-header { position: sticky; }
+
+/* «что входит» на зелёном поле */
+#offer { background: linear-gradient(160deg, #E3F2E4 0%, #D3EBD5 100%); margin: 24px 16px; border-radius: 48px 48px 12px 48px; }
+#offer .lp-eyebrow { background: #3FA84A; color: #FFFFFF; }
+#offer .lp-offer-card { background: rgba(255,255,255,0.85); border-color: transparent; }
+#offer .lp-eq-icon { background: linear-gradient(150deg, #E6F4E7 0%, #CFE8D1 100%); }
+#offer .lp-eq-icon svg { stroke: #23782F; }
+#offer .lp-eq-icon::after { background: linear-gradient(135deg, #FF7A68 0%, var(--amf-red) 60%, var(--amf-red-dark) 100%) !important; }
+
+/* финал — красное поле */
+.lp-final { background: linear-gradient(135deg, #E25446 0%, #B3322A 100%); border-radius: 48px 48px 48px 12px; }
+.lp-final .lp-btn--onlight, .lp-final .lp-btn--primary { background: #FFFFFF; color: #B3322A; }
+.lp-final .lp-btn--onlight:hover { background: #FFF1EF; }
+.lp-final::after { opacity: 0.18; filter: brightness(0) invert(1); }
+
+/* комплекты: выделенный — зелёная рамка */
+.lp-kit--highlight { border-color: #3FA84A; box-shadow: 0 0 0 1px #3FA84A, 0 24px 50px -30px rgba(63,168,74,0.6); }
+.lp-kit__badge { background: #3FA84A; }
+
+/* ---------- «Почему Амфодент» — вторая панель пульта ---------- */
+#trust {
+  --ink: #EAF1F6; --ink-soft: rgba(234,241,246,0.74); --ink-faint: rgba(234,241,246,0.5);
+  --line: rgba(255,255,255,0.1);
+  background: linear-gradient(160deg, #1B4F7E 0%, #13325A 55%, #10243A 100%);
+  margin: 24px 16px; border-radius: 48px 12px 48px 48px;
+  position: relative; overflow: hidden;
+}
+#trust .lp-section__title { color: #FFFFFF; }
+#trust .lp-eyebrow { background: rgba(76,195,90,0.15); color: var(--amf-led); }
+#trust .lp-trust {
+  background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+#trust .lp-trust__value {
+  color: #FFFFFF; font-family: var(--font-num); font-weight: 500;
+  display: flex; align-items: center; gap: 10px;
+}
+#trust .lp-trust__value::before {
+  content: ''; width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto;
+  background: var(--amf-led); box-shadow: 0 0 10px rgba(76,195,90,0.8);
+}
+#trust .lp-trust__label { color: rgba(234,241,246,0.7); }
+@media (max-width: 640px) { #trust { margin: 16px 8px; border-radius: 32px 8px 32px 32px; } }
+
+/* ---------- Этапы: номера как индикаторы ---------- */
+.lp-step__num { background: #13325A; color: var(--amf-led); font-family: var(--font-num); box-shadow: 0 0 0 3px rgba(76,195,90,0.12); }
+
+/* ==========================================================================
+   ШАПКА: один ряд, логотип крупнее, настоящий телефон
+   ========================================================================== */
+.lp-header__inner { max-width: 1360px; padding: 14px 20px; }
+@media (min-width: 768px) { .lp-header__inner { padding: 14px 32px; } }
+.lp-logo { gap: 12px; }
+.lp-logo__em { width: 56px; height: 54px; }
+.lp-logo__wm { width: 186px; height: 27px; }
+.lp-logo__txt { gap: 7px; }
+.lp-logo__tag { font-size: 9.6px; letter-spacing: 0.12em; }
+@media (max-width: 480px) {
+  .lp-logo__em { width: 42px; height: 40px; }
+  .lp-logo__wm { width: 136px; height: 20px; }
+}
+.lp-nav { gap: 22px; }
+.lp-phone { flex-direction: column; align-items: flex-end; line-height: 1.15; }
+@media (min-width: 620px) { .lp-phone { display: flex; } }
+.lp-phone__num { font-family: var(--font-num); font-weight: 500; font-size: 15px; color: var(--ink); letter-spacing: -0.01em; }
+.lp-phone__hint { font-size: 10.5px; font-weight: 500; color: var(--ink-faint); }
+.lp-header__call { display: none; }
+@media (min-width: 1400px) { .lp-header__call { display: inline-flex; } }
+@media (max-width: 1499px) { .lp-nav a[href="#brands"] { display: none; } }
+@media (max-width: 1180px) { .lp-nav { gap: 16px; } .lp-nav a[href="#process"] { display: none; } }
+@media (max-width: 1060px) { .lp-nav a[href="#gallery"] { display: none; } .lp-phone__hint { display: none; } }
+
+/* ==========================================================================
+   «ПОЧЕМУ МЫ» — часть строки фактов, а не отдельная кнопка
+   ========================================================================== */
+.lp-hero-cinematic__stats { align-items: center; }
+.lp-why-trigger {
+  border: 0; background: none; padding: 0; border-radius: 0;
+  font-size: 12.5px; font-weight: 700; color: var(--accent);
+  gap: 7px;
+  text-decoration: underline; text-underline-offset: 4px;
+  text-decoration-color: rgba(31, 119, 180, 0.35);
+}
+.lp-why-trigger::before {
+  width: 7px; height: 7px; background: var(--amf-led);
+  box-shadow: 0 0 8px rgba(76,195,90,0.8);
+  animation: none;
+}
+.lp-why-trigger:hover { background: none; box-shadow: none; text-decoration-color: currentColor; color: var(--accent-dark); }
+
+/* ==========================================================================
+   ФИНАЛ «ОСТАЛИСЬ ВОПРОСЫ?» — спокойная карточка, акцент только на кнопке
+   ========================================================================== */
+.lp-final {
+  background: #F4F7F9;
+  border: 1px solid var(--line);
+  border-radius: 32px 32px 32px 8px;
+  box-shadow: 0 30px 60px -44px rgba(19, 40, 61, 0.45);
+  color: var(--ink);
+}
+.lp-final::before {
+  inset: 0 0 auto 0; height: 4px; z-index: 1;
+  background: linear-gradient(90deg, #1C8FD6 0 40%, #E8423A 40% 80%, #3FA84A 80% 100%);
+}
+.lp-final::after { content: none; display: none; }
+.lp-final__title { color: var(--ink); }
+.lp-final__subtitle { color: var(--ink-soft); }
+.lp-final .lp-btn--onlight,
+.lp-final .lp-btn--primary {
+  background: linear-gradient(135deg, #E25446 0%, var(--amf-red) 45%, var(--amf-red-dark) 100%);
+  color: #FFFFFF;
+}
+.lp-final .lp-btn--onlight:hover { background: var(--amf-red-dark); }
+.lp-final .lp-btn--outlineLight,
+.lp-final .lp-btn--ghost { color: var(--ink); border-color: var(--line-strong); background: transparent; }
+.lp-final .lp-btn--outlineLight:hover { color: var(--accent); border-color: var(--accent); background: transparent; }
+
+/* телефон на узких экранах — круглая кнопка с трубкой */
+@media (max-width: 619px) {
+  .lp-phone {
+    display: inline-flex; width: 42px; height: 42px; border-radius: 14px 14px 14px 4px;
+    align-items: center; justify-content: center;
+    border: 1px solid var(--line-strong); background: rgba(244,247,249,0.8);
+  }
+  .lp-phone__num, .lp-phone__hint { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .lp-phone::before {
+    content: ''; width: 18px; height: 18px; background: var(--accent);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .lp-header__right { gap: 8px; }
+}
+@media (max-width: 380px) { .lp-logo__wm { width: 118px; height: 18px; } .lp-logo__em { width: 36px; height: 34px; } }
+@media (max-width: 480px) {
+  .lp-header__inner { gap: 10px; }
+  .lp-logo { gap: 8px; }
+  .lp-logo__em { width: 38px; height: 36px; }
+  .lp-logo__wm { width: 124px; height: 18px; }
+  .lp-header .lp-btn--primary { padding: 10px 14px; min-height: 42px; font-size: 14px; }
+}
+@media (max-width: 380px) {
+  .lp-logo__wm { width: 104px; height: 15px; }
+  .lp-header .lp-btn--primary { padding: 10px 11px; font-size: 13px; }
+}
+@media (max-width: 340px) { .lp-phone { display: none; } }
+/* плавающая кнопка «Рассчитать» — красная, как остальные главные действия */
+.lp-fab .lp-btn--primary {
+  background: linear-gradient(135deg, #E25446 0%, var(--amf-red) 45%, var(--amf-red-dark) 100%);
+  color: #FFFFFF;
+}
+.lp-fab .lp-btn--primary:hover { background: var(--amf-red-dark); }
+
+/* ==========================================================================
+   ТРЁХЦВЕТНАЯ ЛЕНТА — АНИМАЦИЯ
+   1) при загрузке лента «прорисовывается» слева направо: синий → красный → зелёный;
+   2) потом раз в несколько секунд по ней пробегает мягкий блик;
+   3) в карточке «Остались вопросы?» лента прорисовывается, когда до неё доскроллили.
+   ========================================================================== */
+.lp-header::after {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 100%),
+    linear-gradient(90deg, #1C8FD6 0 40%, #E8423A 40% 80%, #3FA84A 80% 100%);
+  background-size: 14% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  background-position: -20% 0, 0 0;
+  clip-path: inset(0 100% 0 0);
+  animation:
+    amf-ribbon-draw 1.4s cubic-bezier(.65,0,.35,1) 0.2s forwards,
+    amf-ribbon-glint 7s ease-in-out 2.4s infinite;
+}
+@keyframes amf-ribbon-draw { to { clip-path: inset(0 0 0 0); } }
+@keyframes amf-ribbon-glint {
+  0%   { background-position: -20% 0, 0 0; }
+  35%  { background-position: 120% 0, 0 0; }
+  100% { background-position: 120% 0, 0 0; }
+}
+
+.lp-final::before { clip-path: inset(0 100% 0 0); transition: clip-path 1.4s cubic-bezier(.65,0,.35,1) 0.15s; }
+.lp-final.is-ribbon-in::before { clip-path: inset(0 0 0 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-header::after { animation: none; clip-path: none; background-position: -20% 0, 0 0; }
+  .lp-final::before { clip-path: none; transition: none; }
+}
+
+/* ==========================================================================
+   ЧАТ: кнопка живёт рядом с плавающей «Рассчитать» и появляется вместе с ней —
+   после первого экрана и не поверх калькулятора. Ничего не перекрывает.
+   ========================================================================== */
+.lp-fab { display: flex; align-items: center; gap: 10px; bottom: 18px; }
+@media (min-width: 960px) { .lp-fab { bottom: 26px; } }
+.lp-fab .lp-chat-trigger { position: relative; right: auto; bottom: auto; width: 48px; height: 48px; flex: 0 0 auto; }
+.lp-chat { bottom: 82px; }
+@media (min-width: 960px) { .lp-chat { bottom: 92px; } }
