@@ -325,10 +325,10 @@ section[id] { scroll-margin-top: 76px; }
 
 .lp-zoom__frame {
   position: relative;
-  width: var(--zoomw, 44%);
-  height: var(--zoomh, 46vh);
+  width: var(--zoomw, 58%);
+  height: var(--zoomh, 60vh);
   max-width: 100%;
-  border-radius: var(--zoomr, 22px);
+  border-radius: var(--zoomr, 17px);
   overflow: hidden;
   box-shadow: 0 30px 70px -25px rgba(11, 90, 79, 0.45);
   background: var(--ink-deep);
