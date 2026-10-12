@@ -132,6 +132,32 @@
       });
     });
 
+    // ---------- 4а. Выбор комплекта в первом экране ----------
+    // Цены «от» (установка + компрессор) берём из config.js, чтобы карточки в
+    // первом экране и калькулятор всегда показывали одно и то же.
+    (function () {
+      const C = window.AMFODENT_CONFIG;
+      const fmt = window.AmfodentCalculator && window.AmfodentCalculator.formatMoney;
+      if (C && C.kits && fmt) {
+        document.querySelectorAll('[data-kit-base]').forEach(function (el) {
+          const kit = C.kits.filter(function (k) { return k.id === el.getAttribute('data-kit-base'); })[0];
+          if (!kit) return;
+          const base = C.kitComponents
+            .filter(function (c) { return c.required && kit.items[c.id]; })
+            .reduce(function (sum, c) { return sum + kit.items[c.id].price; }, 0);
+          el.textContent = fmt(base, C);
+        });
+      }
+      const go = document.getElementById('hero-kit-go');
+      if (!go) return;
+      go.addEventListener('click', function () {
+        const picked = document.querySelector('input[name="hero-kit"]:checked');
+        const app = calcApp();
+        if (picked && app && app.presetKit) app.presetKit(picked.value);
+        else scrollToCalculator();
+      });
+    })();
+
     // Обычные ссылки-якоря на калькулятор (без пресета)
     document.querySelectorAll('[data-scroll-calc]').forEach(function (el) {
       el.addEventListener('click', function (e) {
@@ -142,7 +168,7 @@
 
     // ---------- 5. Плавающая кнопка ----------
     const fab = document.querySelector('.lp-fab');
-    const hero = document.querySelector('.lp-hero-cinematic');
+    const hero = document.querySelector('.lp-hero2, .lp-hero-cinematic');
     const calcRoot = document.getElementById('calc-root');
     const mobileBar = document.getElementById('mobile-bar');
     if (fab && hero && calcRoot && 'IntersectionObserver' in window) {
@@ -533,11 +559,8 @@
       });
       if (closeBtn) closeBtn.addEventListener('click', close);
 
-      // Автооткрытие один раз — через 15 секунд после загрузки страницы,
-      // если посетитель ещё не открыл чат сам.
-      autoTimer = setTimeout(function () {
-        if (win.hidden) open();
-      }, 15000);
+      // Автооткрытие отключено: окно чата всплывало поверх первого экрана
+      // и калькулятора. Чат открывается только по кнопке рядом с «Рассчитать».
     })();
   });
 })();
