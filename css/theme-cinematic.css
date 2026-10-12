@@ -1,5 +1,5 @@
 /* ==========================================================================
-   АМФОДЕНТ — ТЕМА «КИНЕМАТОГРАФИЧНЫЙ ПОСТЕР»
+   АМФОДЕНТ — ТЕМА «КИНЕМАТОГРАФИЧНЫЙ ПОСТЕР» (мягко осветлённая: графитово-голубой фон)
    Тёмная версия лендинга поверх css/style.css + css/landing.css. Ничего не
    удаляет и не переопределяет логику: только палитра, типографика и
    декоративный слой (в т.ч. «матовое стекло» калькулятора). Подключается
@@ -8,20 +8,20 @@
 
 /* ---------- Токены: тёмная палитра поверх style.css/landing.css ---------- */
 :root {
-  --bg: #0A100E;
-  --surface: rgba(244, 251, 248, 0.05);
-  --surface-alt: rgba(244, 251, 248, 0.03);
-  --surface-sunken: rgba(244, 251, 248, 0.09);
+  --bg: #1D2C33;
+  --surface: rgba(244, 251, 248, 0.07);
+  --surface-alt: rgba(244, 251, 248, 0.045);
+  --surface-sunken: rgba(244, 251, 248, 0.11);
 
   --ink: #F4FBF8;
-  --ink-soft: rgba(244, 251, 248, 0.68);
-  --ink-faint: rgba(244, 251, 248, 0.46);
+  --ink-soft: rgba(244, 251, 248, 0.74);
+  --ink-faint: rgba(244, 251, 248, 0.54);
 
   --accent: #3EF0C9;
   --accent-dark: #22B597;
   --accent-soft: rgba(62, 240, 201, 0.14);
 
-  --line: rgba(244, 251, 248, 0.14);
+  --line: rgba(244, 251, 248, 0.16);
   --line-strong: rgba(244, 251, 248, 0.28);
 
   --warn: #E0B24A;
@@ -29,12 +29,12 @@
   --danger: #E06B5C;
   --danger-soft: rgba(224, 107, 92, 0.12);
 
-  --shadow-card: 0 10px 24px -16px rgba(0, 0, 0, 0.55);
-  --shadow-panel: 0 24px 60px -24px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 10px 24px -16px rgba(0, 0, 0, 0.4);
+  --shadow-panel: 0 24px 60px -24px rgba(0, 0, 0, 0.45);
   --shadow-bar: 0 -10px 30px -12px rgba(0, 0, 0, 0.55);
 
-  --ink-deep: #050908;
-  --ink-deep-2: #081210;
+  --ink-deep: #17252B;
+  --ink-deep-2: #1A2A31;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 20px 44px -20px rgba(62, 240, 201, 0.22), 0 6px 18px -8px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 30px 70px -26px rgba(62, 240, 201, 0.26), 0 10px 24px -10px rgba(0, 0, 0, 0.6);
@@ -57,7 +57,7 @@ body { background: var(--bg); color: var(--ink); }
 .option.is-checked {
   box-shadow: 0 0 0 1px rgba(62, 240, 201, 0.28), 0 20px 40px -22px rgba(62, 240, 201, 0.4);
 }
-.option.is-checked .option__box { box-shadow: inset 0 0 0 3px rgba(10, 16, 14, 0.9); }
+.option.is-checked .option__box { box-shadow: inset 0 0 0 3px rgba(29, 44, 51, 0.9); }
 
 /* Рифлёное стекло — акцент на сводке расчёта, как на макетах калькулятора */
 .calc-summary .panel {
@@ -70,8 +70,8 @@ body { background: var(--bg); color: var(--ink); }
 /* ==========================================================================
    ШАПКА
    ========================================================================== */
-.lp-header { background: rgba(10, 16, 14, 0.72); border-bottom: 1px solid var(--line); }
-.lp-header.is-scrolled { background: rgba(10, 16, 14, 0.92); }
+.lp-header { background: rgba(29, 44, 51, 0.72); border-bottom: 1px solid var(--line); }
+.lp-header.is-scrolled { background: rgba(29, 44, 51, 0.92); }
 .lp-logo { color: var(--ink); }
 .lp-logo__mark {
   background: var(--ink);
@@ -108,11 +108,11 @@ body { background: var(--bg); color: var(--ink); }
 }
 .lp-hero-cinematic__scrim-h {
   position: absolute; inset: 0;
-  background: linear-gradient(90deg, rgba(7,12,11,0.9) 0%, rgba(7,12,11,0.5) 40%, rgba(7,12,11,0.08) 62%, rgba(7,12,11,0.55) 100%);
+  background: linear-gradient(90deg, rgba(29,44,51,0.82) 0%, rgba(29,44,51,0.5) 40%, rgba(29,44,51,0.08) 62%, rgba(29,44,51,0.55) 100%);
 }
 .lp-hero-cinematic__scrim-v {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(7,12,11,0.55) 0%, rgba(7,12,11,0.05) 24%, rgba(7,12,11,0.35) 66%, rgba(7,12,11,0.96) 100%);
+  background: linear-gradient(180deg, rgba(29,44,51,0.55) 0%, rgba(29,44,51,0.05) 24%, rgba(29,44,51,0.35) 66%, rgba(29,44,51,0.96) 100%);
 }
 
 .lp-hero-cinematic__inner {
@@ -271,7 +271,7 @@ body { background: var(--bg); color: var(--ink); }
   display: none;
   align-items: center; justify-content: center;
   padding: 24px;
-  background: rgba(5, 9, 8, 0.82);
+  background: rgba(16, 26, 31, 0.82);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 .lp-why-modal:not([hidden]) { display: flex; animation: lp-why-fade 0.2s ease; }
@@ -280,7 +280,7 @@ body { background: var(--bg); color: var(--ink); }
   position: relative;
   width: 100%; max-width: 560px;
   max-height: 88vh; overflow-y: auto;
-  background: #0A100E;
+  background: #24363E;
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 34px 30px 30px;
@@ -368,7 +368,7 @@ body { background: var(--bg); color: var(--ink); }
    ========================================================================== */
 .lp-section--alt { background: var(--surface); }
 .lp-eyebrow { color: var(--accent); }
-.lp-zoom__scrim { background: linear-gradient(180deg, rgba(7,12,11,0.1) 0%, rgba(7,12,11,0.85) 100%); }
+.lp-zoom__scrim { background: linear-gradient(180deg, rgba(29,44,51,0.1) 0%, rgba(29,44,51,0.85) 100%); }
 .lp-zoom__text { color: var(--ink); }
 .lp-zoom__hint { color: var(--ink-faint); }
 
@@ -376,9 +376,9 @@ body { background: var(--bg); color: var(--ink); }
 .lp-task:hover { border-color: var(--accent); box-shadow: 0 14px 32px -18px rgba(62,240,201,0.35); }
 .lp-task__cta { color: var(--accent); }
 
-.lp-gallery__item::after { background: linear-gradient(0deg, rgba(5,9,8,0.7) 0%, transparent 55%); }
+.lp-gallery__item::after { background: linear-gradient(0deg, rgba(16,26,31,0.7) 0%, transparent 55%); }
 .lp-gallery__cta { margin-top: 24px; display: flex; justify-content: center; }
-.lp-lightbox { background: rgba(5, 9, 8, 0.94); }
+.lp-lightbox { background: rgba(16, 26, 31, 0.94); }
 
 .lp-kit { background: var(--surface); }
 .lp-kit--highlight { border-color: var(--accent); }
@@ -397,7 +397,7 @@ body { background: var(--bg); color: var(--ink); }
 .lp-faq summary { color: var(--ink); }
 .lp-faq summary::after { color: var(--ink-faint); }
 
-.lp-final { background: linear-gradient(135deg, #0B1A16 0%, #071310 100%); }
+.lp-final { background: linear-gradient(135deg, #263B43 0%, #1A2B32 100%); }
 .lp-final::before { background: radial-gradient(120% 100% at 20% 0%, rgba(62,240,201,0.18) 0%, transparent 55%); }
 .lp-final__title { color: var(--ink); }
 
@@ -436,7 +436,7 @@ body { background: var(--bg); color: var(--ink); }
 .lp-chat {
   position: fixed; right: 18px; bottom: 84px; z-index: 61;
   width: min(340px, calc(100vw - 36px));
-  background: #0A100E;
+  background: #24363E;
   border: 1px solid var(--line);
   border-radius: 18px;
   box-shadow: var(--shadow-panel);
