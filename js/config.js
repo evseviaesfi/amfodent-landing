@@ -103,6 +103,7 @@ const AMFODENT_CONFIG = {
         email:   { label: 'Email', required: false, placeholder: 'name@example.com', requiredForContactMethod: 'email' },
         city:    { label: 'Город', required: false, placeholder: 'Город размещения кабинета' },
         contactMethod: { label: 'Удобный способ связи', required: true },
+        contactTime: { label: 'Когда связаться', required: true },
         comment: { label: 'Комментарий', required: false, placeholder: 'Сроки, пожелания по моделям, вопросы' }
       },
       consentLabel: 'Согласен на обработку персональных данных для ответа на эту заявку',
@@ -119,8 +120,10 @@ const AMFODENT_CONFIG = {
     },
 
     submitted: {
-      title: 'Расчёт сформирован',
-      note: 'Реальная отправка на сервер и в CRM подключается на этапе интеграции (см. INTEGRATION.md). Ниже — объект данных, который будет передан.',
+      title: 'Заявка отправлена',
+      note: 'Менеджер свяжется с вами: {when}, способ связи — {method}. Рабочее время: {hours}.',
+      failTitle: 'Не получилось отправить заявку',
+      failNote: 'Похоже, проблема со связью. Позвоните нам — 8 (800) 550-45-35, бесплатно по России, или попробуйте отправить ещё раз.',
       payloadTitle: 'Объект заявки'
     },
 
@@ -323,9 +326,18 @@ const AMFODENT_CONFIG = {
     { id: 'email',    label: 'Email' }
   ],
 
+  // Когда связаться (срочность). «В течение часа» помечается в заявке как срочная.
+  contactTimes: [
+    { id: 'hour',  label: 'В течение часа', urgent: true },
+    { id: 'today', label: 'Сегодня' },
+    { id: 'days',  label: 'В ближайшие дни' }
+  ],
+  workingHours: 'пн–чт 10:00–18:00, пт 10:00–17:00',
+
   // ----- СОБЫТИЯ АНАЛИТИКИ -----
   // Заготовки имён событий. Отправку см. в js/analytics.js.
   analyticsEvents: {
+    consult_submit: 'landing_consult_submit', // заявка из окна «Консультация инженера»
     start:        'calculator_start',         // первый показ калькулятора
     step:         'calculator_step',          // переход на шаг
     optionChange: 'calculator_option_change', // изменение комплектации

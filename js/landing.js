@@ -77,9 +77,11 @@
         const growP = Math.max(0, Math.min(1, eased / 0.62));
         const textP = Math.max(0, Math.min(1, (eased - 0.5) / 0.5));
 
-        const width = 44 + growP * (100 - 44);
-        const height = 46 + growP * (100 - 46);
-        const radius = 22 - growP * 22;
+        // Стартовый размер — сразу «как после первого шага» (раньше было 44%/46vh):
+        // фото не начинает с маленькой карточки, а растёт меньше и спокойнее.
+        const width = 58 + growP * (100 - 58);
+        const height = 60 + growP * (100 - 60);
+        const radius = 17 - growP * 17;
 
         zoomSticky.style.setProperty('--zoomw', width + '%');
         zoomSticky.style.setProperty('--zoomh', height + 'vh');
@@ -358,6 +360,165 @@
       });
     })();
 
+    // ---------- 10а. Окно «Консультация инженера» / «Обратный звонок» ----------
+    // Короткая форма без калькулятора. Заявка уходит через js/leads.js
+    // (Telegram + почта). Если посетитель уже выбрал комплект в калькуляторе,
+    // расчёт можно приложить одной галочкой.
+    (function () {
+      const modal = document.getElementById('consult-modal');
+      const form = document.getElementById('consult-form');
+      if (!modal || !form) return;
+      const done = document.getElementById('consult-done');
+      const errorEl = document.getElementById('consult-error');
+      const submitBtn = document.getElementById('consult-submit');
+      const emailWrap = form.querySelector('.lp-consult__email');
+      const attachWrap = form.querySelector('.lp-consult__attach');
+      const calcLabel = document.getElementById('consult-calc');
+      let lastFocus = null;
+      let mode = 'engineer';
+
+      const MODES = {
+        engineer: { kicker: 'Консультация инженера', title: 'Перезвоним и ответим на вопросы', sub: 'Инженер подскажет по комплектации, планировке и срокам. Это бесплатно.', subject: 'Консультация инженера' },
+        callback: { kicker: 'Обратный звонок', title: 'Перезвоним, когда вам удобно', sub: 'Оставьте номер — менеджер позвонит и ответит на вопросы по оснащению.', subject: 'Обратный звонок' },
+        question: { kicker: 'Вопрос инженеру', title: 'Спросите про ваш кабинет', sub: 'Напишите вопрос — инженер ответит удобным для вас способом.', subject: 'Вопрос инженеру' },
+        lead: { kicker: 'Заявка', title: 'Подберём кабинет вместе', sub: 'Менеджер свяжется с вами, уточнит задачу и подготовит предложение.', subject: 'Заявка с лендинга' }
+      };
+
+      function money(n) {
+        const fmt = window.AmfodentCalculator && window.AmfodentCalculator.formatMoney;
+        return fmt ? fmt(n, window.AMFODENT_CONFIG) : Math.round(n) + ' ₽';
+      }
+
+      // Краткая сводка расчёта, если посетитель уже выбрал комплект.
+      function calcSummary() {
+        const app = calcApp();
+        const C = window.AMFODENT_CONFIG;
+        if (!app || !app.getState || !app.getCalculation || !C) return null;
+        const st = app.getState();
+        if (!st.kit) return null;
+        const kit = (C.kits || []).filter(function (k) { return k.id === st.kit; })[0];
+        let total = null;
+        try { total = app.getCalculation().total; } catch (e) { total = null; }
+        let lines = [];
+        try {
+          lines = window.AmfodentCalculator.describeConfiguration(C, st)
+            .map(function (r) { return r.section + ': ' + r.label; });
+        } catch (e) { lines = []; }
+        return { short: (kit ? kit.label : st.kit) + (total ? ', ~' + money(total) : ''), lines: lines, total: total };
+      }
+
+      function open(m) {
+        mode = MODES[m] ? m : 'engineer';
+        const M = MODES[mode];
+        document.getElementById('consult-kicker').textContent = M.kicker;
+        document.getElementById('consult-title').textContent = M.title;
+        document.getElementById('consult-sub').textContent = M.sub;
+        form.hidden = false;
+        done.hidden = true;
+        errorEl.hidden = true;
+        form.querySelectorAll('.has-error').forEach(function (el) { el.classList.remove('has-error'); });
+        const sum = calcSummary();
+        attachWrap.hidden = !sum;
+        if (sum) calcLabel.textContent = sum.short;
+        lastFocus = document.activeElement;
+        modal.hidden = false;
+        document.body.classList.add('lp-modal-open');
+        setTimeout(function () { const f = form.querySelector('input[name="name"]'); if (f) f.focus(); }, 60);
+      }
+      function close() {
+        modal.hidden = true;
+        document.body.classList.remove('lp-modal-open');
+        if (lastFocus && lastFocus.focus) lastFocus.focus();
+      }
+
+      window.AmfodentConsult = { open: open };
+
+      document.querySelectorAll('[data-consult]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          open(btn.getAttribute('data-consult'));
+        });
+      });
+      document.getElementById('consult-close').addEventListener('click', close);
+      document.getElementById('consult-done-close').addEventListener('click', close);
+      modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) close(); });
+
+      form.addEventListener('change', function (e) {
+        if (e.target.name === 'method') emailWrap.hidden = e.target.value !== 'Email';
+        const wrap = e.target.closest('.has-error');
+        if (wrap) wrap.classList.remove('has-error');
+        if (!form.querySelector('.has-error')) errorEl.hidden = true;
+      });
+      form.addEventListener('input', function (e) {
+        const wrap = e.target.closest('.has-error');
+        if (wrap) wrap.classList.remove('has-error');
+        if (!form.querySelector('.has-error')) errorEl.hidden = true;
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const v = function (n) { const el = form.elements[n]; return el ? String(el.value || '').trim() : ''; };
+        const method = (form.querySelector('input[name="method"]:checked') || {}).value || 'Звонок';
+        const whenEl = form.querySelector('input[name="when"]:checked');
+        const errors = [];
+        if (!v('name')) errors.push('name');
+        if (v('phone').replace(/\D/g, '').length < 10) errors.push('phone');
+        if (method === 'Email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('email'))) errors.push('email');
+        if (!form.elements.consent.checked) errors.push('consent');
+        form.querySelectorAll('.has-error').forEach(function (el) { el.classList.remove('has-error'); });
+        if (errors.length) {
+          errors.forEach(function (n) { const w = form.querySelector('[data-f="' + n + '"]'); if (w) w.classList.add('has-error'); });
+          errorEl.textContent = errors.indexOf('consent') !== -1 && errors.length === 1
+            ? 'Отметьте согласие на обработку данных.'
+            : 'Проверьте выделенные поля: имя, телефон (не меньше 10 цифр)' + (method === 'Email' ? ', email' : '') + '.';
+          errorEl.hidden = false;
+          return;
+        }
+        errorEl.hidden = true;
+
+        const urgent = !!(whenEl && whenEl.getAttribute('data-urgent'));
+        const sum = (!attachWrap.hidden && form.elements.attach.checked) ? calcSummary() : null;
+        const lead = {
+          subject: MODES[mode].subject,
+          urgent: urgent,
+          replyTo: method === 'Email' ? v('email') : null,
+          fields: [
+            ['Имя', v('name')],
+            ['Телефон', v('phone')],
+            ['Email', method === 'Email' ? v('email') : ''],
+            ['Способ связи', method],
+            ['Когда связаться', whenEl ? whenEl.value : ''],
+            ['Вопрос', v('question')],
+            ['Расчёт из калькулятора', sum ? sum.lines.join('\n') : ''],
+            ['Ориентировочная сумма', sum && sum.total ? money(sum.total) : ''],
+            ['Страница', window.location.href]
+          ]
+        };
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Отправляем…';
+        const sender = window.AmfodentLeads ? window.AmfodentLeads.send(lead) : Promise.resolve({ delivered: false });
+        if (window.AmfodentAnalytics && window.AmfodentAnalytics.trackEvent) {
+          try { window.AmfodentAnalytics.trackEvent('consult_submit', { mode: mode, urgent: urgent, method: method }); } catch (err) { /* аналитика не обязательна */ }
+        }
+        sender.then(function (res) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Жду звонка →';
+          const ok = !!(res && res.delivered);
+          form.hidden = true;
+          done.hidden = false;
+          document.getElementById('consult-done-kicker').textContent = ok ? 'Готово' : 'Не отправилось';
+          document.getElementById('consult-done-title').textContent = ok ? 'Заявка у нас' : 'Не получилось отправить';
+          document.getElementById('consult-done-text').textContent = ok
+            ? 'Свяжемся ' + (whenEl ? whenEl.value.toLowerCase() : 'сегодня') + ' — ' + (method === 'Звонок' ? 'позвоним' : 'напишем в ' + method) + '. Рабочее время: пн–чт 10:00–18:00, пт 10:00–17:00.'
+            : 'Похоже, проблема со связью. Позвоните нам — 8 (800) 550-45-35, бесплатно по России.';
+          if (ok) form.reset();
+          emailWrap.hidden = true;
+        });
+      });
+    })();
+
     // ---------- 11. Бот-«подогрев»: иконка + сценарий в окне чата ----------
     (function () {
       const trigger = document.getElementById('chat-trigger');
@@ -482,7 +643,7 @@
           test: /срок|когда|быстро|долго|доставк/i,
           reply: 'По срокам смотрю индивидуально — зависит от комплектации и наличия на складе. Оставите телефон? Уточню и перезвоню сама.',
           cta: 'Оставить телефон →',
-          action: function () { scrollToCalculator(); }
+          action: function () { openCallback(); }
         },
         {
           test: /кресл|установк|бренд|оборудован|каталог|комплект/i,
@@ -500,6 +661,13 @@
           action: null
         }
       ];
+      // «Оставить телефон» — короткое окно обратного звонка вместо всего калькулятора.
+      function openCallback() {
+        close();
+        if (window.AmfodentConsult) window.AmfodentConsult.open('callback');
+        else scrollToCalculator();
+      }
+
       const FALLBACK_REPLIES = [
         'Хороший вопрос — тут лучше отвечу предметно, а не общими словами. Оставите телефон? Я на связи весь день и перезвоню сама.',
         'Это лучше обсудить конкретно под ваш случай. Дайте номер — уточню детали и перезвоню сама, без лишних форм.'
@@ -516,7 +684,7 @@
         const reply = FALLBACK_REPLIES[fallbackIndex % FALLBACK_REPLIES.length];
         fallbackIndex++;
         await say(reply, 1100);
-        addInlineCta('Оставить телефон →', function () { scrollToCalculator(); });
+        addInlineCta('Оставить телефон →', function () { openCallback(); });
       }
 
       async function handleUserMessage(text) {

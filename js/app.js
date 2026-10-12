@@ -132,7 +132,35 @@
    */
   const LEAD_ENDPOINT = ''; // например: '/index.php?route=extension/module/amfodent_calculator/lead'
 
+  /** Заявка калькулятора → общий формат js/leads.js (Telegram + почта). */
+  function leadFromPayload(payload) {
+    const c = payload.contact;
+    const t = payload.totals;
+    return {
+      subject: 'Заявка из калькулятора',
+      urgent: !!c.urgent,
+      replyTo: c.email || null,
+      fields: [
+        ['Имя', c.name],
+        ['Телефон', c.phone],
+        ['Email', c.email],
+        ['Город', c.city],
+        ['Способ связи', c.contactMethodLabel],
+        ['Когда связаться', c.contactTimeLabel],
+        ['Комментарий', c.comment],
+        ['Комплектация', payload.configurationText.join('\n')],
+        ['Ориентировочная сумма', money(t.total)],
+        ['Диапазон', money(t.rangeMin) + ' — ' + money(t.rangeMax)],
+        ['Цены', t.provisionalPricing ? 'часть цен предварительная, проверить по каталогу' : null],
+        ['Страница', payload.meta.pageUrl]
+      ]
+    };
+  }
+
   function submitLead(payload) {
+    if (window.AmfodentLeads && window.AmfodentLeads.isConfigured()) {
+      return window.AmfodentLeads.send(leadFromPayload(payload));
+    }
     if (telegramConfigured()) {
       return sendToTelegram(payload);
     }
@@ -174,7 +202,7 @@
       tomographFov: firstId(C.tomographFov.options),
       extras: [],
       services: { extendedServiceInterest: false },
-      contact: { name: '', phone: '', email: '', city: '', contactMethod: null, comment: '', consent: false },
+      contact: { name: '', phone: '', email: '', city: '', contactMethod: null, contactTime: 'today', comment: '', consent: false },
       submitted: false,
       lastSubmissionPayload: null
     };
@@ -228,6 +256,7 @@
     s.contact.city = str(contact.city, 120);
     s.contact.comment = str(contact.comment, 2000);
     s.contact.contactMethod = validId(C.contactMethods, contact.contactMethod);
+    s.contact.contactTime = validId(C.contactTimes, contact.contactTime) || 'today';
     s.contact.consent = !!contact.consent;
 
     s.submitted = !!saved.submitted;
@@ -699,6 +728,13 @@
       });
     }).join('');
 
+    const times = C.contactTimes.map(function (m) {
+      return optionCard({
+        type: 'radio', name: 'contact_time', value: m.id,
+        checked: state.contact.contactTime === m.id, title: m.label
+      });
+    }).join('');
+
     return '<form id="lead-form" novalidate>' +
       '<h3 class="form-title">' + escapeHtml(F.title) + '</h3>' +
       '<p class="form-note">' + escapeHtml(F.note) + '</p>' +
@@ -729,6 +765,11 @@
       fieldError('contactMethod') +
       '</div>' +
 
+      '<div class="field" data-field="contactTime">' +
+      '<span class="field__label">' + escapeHtml(F.fields.contactTime.label) + '</span>' +
+      '<div class="option-grid option-grid--compact">' + times + '</div>' +
+      '</div>' +
+
       '<label class="field" data-field="comment">' +
       '<span class="field__label">' + escapeHtml(F.fields.comment.label) +
       ' <span class="field__optional">' + escapeHtml(LBL.optional) + '</span></span>' +
@@ -752,15 +793,18 @@
 
   function renderSubmittedPreview() {
     const payload = state.lastSubmissionPayload || {};
-    const json = escapeHtml(JSON.stringify(payload, null, 2));
+    const contact = payload.contact || {};
+    const delivered = !!(payload.meta && payload.meta.delivered);
     const S = UI.submitted;
-    return '<div class="submitted">' +
-      '<p class="submitted__title">' + escapeHtml(S.title) + '</p>' +
-      '<p class="submitted__note">' + escapeHtml(S.note) + '</p>' +
-      '<details class="submitted__details">' +
-      '<summary>' + escapeHtml(S.payloadTitle) + '</summary>' +
-      '<pre class="submitted__json">' + json + '</pre>' +
-      '</details>' +
+    const note = delivered
+      ? S.note
+          .replace('{when}', (contact.contactTimeLabel || 'сегодня').toLowerCase())
+          .replace('{method}', (contact.contactMethodLabel || 'звонок').toLowerCase())
+          .replace('{hours}', C.workingHours || '')
+      : S.failNote;
+    return '<div class="submitted' + (delivered ? '' : ' submitted--fail') + '">' +
+      '<p class="submitted__title">' + escapeHtml(delivered ? S.title : S.failTitle) + '</p>' +
+      '<p class="submitted__note">' + escapeHtml(note) + '</p>' +
       '<button type="button" class="btn btn--ghost" id="refill-btn">' +
       escapeHtml(UI.buttons.refill) + '</button>' +
       '</div>';
@@ -1025,6 +1069,10 @@
         updateEmailRequirement();
         break;
 
+      case 'contact_time':
+        state.contact.contactTime = input.value;
+        break;
+
       case 'consent':
         state.contact.consent = input.checked;
         clearFieldError('consent');
@@ -1252,6 +1300,7 @@
   function buildSubmissionPayload(yandexClientId) {
     const c = calc();
     const contactMethodItem = AmfodentCalculator.findById(C.contactMethods, state.contact.contactMethod);
+    const contactTimeItem = AmfodentCalculator.findById(C.contactTimes, state.contact.contactTime);
 
     return {
       source: 'amfodent_calculator',
@@ -1264,6 +1313,9 @@
         city: state.contact.city.trim() || null,
         contactMethod: state.contact.contactMethod,
         contactMethodLabel: contactMethodItem ? contactMethodItem.label : null,
+        contactTime: state.contact.contactTime,
+        contactTimeLabel: contactTimeItem ? contactTimeItem.label : null,
+        urgent: !!(contactTimeItem && contactTimeItem.urgent),
         comment: state.contact.comment.trim() || null,
         personalDataConsent: !!state.contact.consent
       },
