@@ -407,7 +407,7 @@
         return { short: (kit ? kit.label : st.kit) + (total ? ', ~' + money(total) : ''), lines: lines, total: total };
       }
 
-      function open(m) {
+      function open(m, prefillQuestion) {
         mode = MODES[m] ? m : 'engineer';
         const M = MODES[mode];
         document.getElementById('consult-kicker').textContent = M.kicker;
@@ -420,6 +420,7 @@
         const sum = calcSummary();
         attachWrap.hidden = !sum;
         if (sum) calcLabel.textContent = sum.short;
+        if (prefillQuestion && form.elements.question) form.elements.question.value = String(prefillQuestion).slice(0, 1000);
         lastFocus = document.activeElement;
         modal.hidden = false;
         document.body.classList.add('lp-modal-open');
@@ -552,10 +553,10 @@
         body.scrollTop = body.scrollHeight;
         return b;
       }
-      function addInlineCta(text, onClick) {
+      function addInlineCta(text, onClick, secondary) {
         const cta = document.createElement('button');
         cta.type = 'button';
-        cta.className = 'lp-chat__cta';
+        cta.className = 'lp-chat__cta' + (secondary ? ' lp-chat__cta--ghost' : '');
         cta.textContent = text;
         cta.addEventListener('click', onClick);
         body.appendChild(cta);
@@ -626,7 +627,49 @@
       // Это не ИИ — набор правил, чтобы ответ звучал по делу, а не молчал
       // на непонятный вопрос. На всё, что не распознано, бот честно
       // предлагает передать вопрос живому менеджеру, а не притворяется.
+      // Бренды берём прямо из блока «Бренды» на странице — список всегда совпадает с сайтом.
+      // Плюс русские написания, которыми их часто пишут в чате.
+      const BRAND_ALIASES = {
+        'KaVo': ['каво'], 'Sirona': ['сирона'], 'Planmeca': ['планмека', 'планмеко'], 'A-dec': ['адек', 'adec'],
+        'Stern Weber': ['стерн', 'штерн', 'stern'], 'Castellini': ['кастеллини', 'кастелини'], 'Anthos': ['антос'],
+        'Vatech': ['ватек', 'ватеч'], 'NewTom': ['ньютом', 'нью том'], 'Genoray': ['генорей'], 'Carestream': ['карестрим'],
+        'Chirana': ['хирана'], 'Diplomat': ['дипломат'], 'Lifedent': ['лайфдент'], 'Siger': ['сигер'],
+        'Ajax': ['аякс'], 'Slovadent': ['словадент'], 'Trident': ['трайдент', 'тридент'], 'Cattani': ['каттани']
+      };
+      function escapeRe(x) { return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+      function brandMentioned(text) {
+        const low = text.toLowerCase();
+        const names = Array.prototype.map.call(document.querySelectorAll('#brands .lp-brand-chip'), function (el) {
+          return el.textContent.replace(/\s*\(.*\)\s*/, '').trim();
+        });
+        const found = [];
+        names.forEach(function (name) {
+          if (found.indexOf(name) !== -1) return;
+          const variants = [name.toLowerCase()].concat(BRAND_ALIASES[name] || []);
+          const hit = variants.some(function (v) {
+            return /^[a-z0-9 -]+$/.test(v)
+              ? new RegExp('(^|[^a-z])' + escapeRe(v) + '($|[^a-z])').test(low)
+              : low.indexOf(v) !== -1;
+          });
+          if (hit) found.push(name);
+        });
+        return found;
+      }
+      function scrollToBrands() {
+        const el = document.getElementById('brands');
+        if (el) el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+      }
+
       const INTENTS = [
+        {
+          // «Дайте телефон», «как с вами связаться»
+          test: /телефон|номер|позвонить|звонок|контакт|связат|адрес|где вы/i,
+          reply: 'Наш телефон — 8 (800) 550-45-35, бесплатно по России. Работаем пн–чт 10:00–18:00, пт 10:00–17:00. Офис: Санкт-Петербург, Малая Митрофаньевская ул., 5к1. Можно оставить свой номер — перезвоним.',
+          cta: 'Позвонить →',
+          action: function () { window.location.href = 'tel:+78005504535'; },
+          cta2: 'Перезвоните мне →',
+          action2: function () { openCallback(); }
+        },
         {
           test: /цен|стоимост|сколько сто|бюджет|дорого/i,
           reply: 'Зависит от комплектации, но это займёт всего пару минут — посчитаем вместе прямо здесь?',
@@ -640,13 +683,40 @@
           action: function () { scrollToCalculator(); }
         },
         {
+          // Конкретный бренд: «есть KaVo?», «работаете с Сироной?»
+          test: function (text) { return brandMentioned(text).length > 0; },
+          reply: function (text) {
+            const b = brandMentioned(text);
+            return 'Да, ' + b.join(', ') + ' — в нашем ассортименте. Подберу модель под ваш кабинет и проверю наличие. Полный список брендов — на странице, а можно сразу оставить телефон.';
+          },
+          cta: 'Все бренды →',
+          action: scrollToBrands,
+          cta2: 'Оставить телефон →',
+          action2: function () { openCallback(); }
+        },
+        {
+          // Общий вопрос о брендах / производителях
+          test: /бр[еэ]нд|марк[аиуеой]|производител|фирм[аыуе]|какие\s+(есть\s+)?(установк|кресл|томограф|рентген|визиограф|оборудован)/i,
+          reply: 'Работаем с ведущими производителями: установки A-dec, KaVo, Sirona, Planmeca, Stern Weber, Castellini и другие; 3D-томографы Vatech, Planmeca, NewTom; рентген и визиографы Trident, Carestream, Genoray. Весь список — в блоке «Бренды».',
+          cta: 'Смотреть бренды →',
+          action: scrollToBrands
+        },
+        {
+          test: /томограф|клкт|(^|[^а-яё])кт([^а-яё]|$)|3d|рентген|визиограф|датчик|ортопантомограф/i,
+          reply: 'Рентген, визиограф или 3D-томограф можно добавить к любому комплекту — в калькуляторе есть отдельный шаг «Рентген и 3D». Бренды — Vatech, Planmeca, Genoray, NewTom и другие.',
+          cta: 'Смотреть бренды →',
+          action: scrollToBrands,
+          cta2: 'Добавить в расчёт →',
+          action2: function () { scrollToCalculator(); }
+        },
+        {
           test: /срок|когда|быстро|долго|доставк/i,
           reply: 'По срокам смотрю индивидуально — зависит от комплектации и наличия на складе. Оставите телефон? Уточню и перезвоню сама.',
           cta: 'Оставить телефон →',
           action: function () { openCallback(); }
         },
         {
-          test: /кресл|установк|бренд|оборудован|каталог|комплект/i,
+          test: /кресл|установк|оборудован|каталог|комплект/i,
           reply: 'Покажу конкретные варианты, а не общий список — так проще сравнить.',
           cta: 'Смотреть комплекты →',
           action: function () {
@@ -668,23 +738,37 @@
         else scrollToCalculator();
       }
 
+      // Нераспознанный вопрос: не требуем телефон, а предлагаем, куда пойти дальше,
+      // и даём передать вопрос инженеру — текст подставится в форму сам.
       const FALLBACK_REPLIES = [
-        'Хороший вопрос — тут лучше отвечу предметно, а не общими словами. Оставите телефон? Я на связи весь день и перезвоню сама.',
-        'Это лучше обсудить конкретно под ваш случай. Дайте номер — уточню детали и перезвоню сама, без лишних форм.'
+        'Чтобы ответить точно, передам ваш вопрос инженеру. Или могу сразу показать бренды и готовые комплекты.',
+        'Тут лучше ответит инженер — передам ему вопрос. А пока можно посмотреть бренды или прикинуть сумму в калькуляторе.'
       ];
       let fallbackIndex = 0;
 
       async function respondTo(text) {
-        const match = INTENTS.find(function (i) { return i.test.test(text); });
+        const match = INTENTS.find(function (i) {
+          return typeof i.test === 'function' ? i.test(text) : i.test.test(text);
+        });
         if (match) {
-          await say(match.reply, 1000);
+          await say(typeof match.reply === 'function' ? match.reply(text) : match.reply, 1000);
           if (match.cta) addInlineCta(match.cta, match.action);
+          if (match.cta2) addInlineCta(match.cta2, match.action2, true);
           return;
         }
         const reply = FALLBACK_REPLIES[fallbackIndex % FALLBACK_REPLIES.length];
         fallbackIndex++;
         await say(reply, 1100);
-        addInlineCta('Оставить телефон →', function () { openCallback(); });
+        addInlineCta('Задать вопрос инженеру →', function () {
+          close();
+          if (window.AmfodentConsult) window.AmfodentConsult.open('question', text);
+          else scrollToCalculator();
+        });
+        addInlineCta('Бренды →', scrollToBrands, true);
+        addInlineCta('Готовые комплекты →', function () {
+          const kits = document.getElementById('kits');
+          if (kits) kits.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, true);
       }
 
       async function handleUserMessage(text) {
