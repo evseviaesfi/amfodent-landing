@@ -424,3 +424,9 @@ body.lp-modal-open { overflow: hidden; }
 
 /* калькулятор: итог после отправки */
 .lp-calc-wrap .submitted--fail .submitted__title { color: #FFB4A9; }
+
+/* бренды: пояснение под названием группы (синонимы, по которым ищут) */
+.lp-brand-group__title:has(+ .lp-brand-group__hint) { margin-bottom: 2px; }
+.lp-brand-group__hint { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 10px; }
+.lp-chat__cta--ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.lp-chat__cta--ghost:hover { background: transparent; color: #1F77B4; box-shadow: inset 0 0 0 1px #1F77B4; }
