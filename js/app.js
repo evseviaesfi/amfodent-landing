@@ -712,7 +712,7 @@
         ? ' <span class="field__required" aria-hidden="true">' + escapeHtml(LBL.required) + '</span>'
         : ' <span class="field__optional">' + escapeHtml(LBL.optional) + '</span>') +
       '</span>' +
-      '<input type="' + inputType + '" id="f-' + name + '" ' +
+      '<input type="' + inputType + '" class="ym-disable-keys" id="f-' + name + '" ' +
       'placeholder="' + escapeHtml(cfg.placeholder || '') + '" ' +
       (extraAttrs || '') +
       'value="' + escapeHtml(value) + '">' +
@@ -771,7 +771,7 @@
       escapeHtml(LBL.required) + '</span>' +
       '<span class="field__optional' + (emailRequired ? ' is-hidden' : '') + '" id="email-optional"> ' +
       escapeHtml(LBL.optional) + '</span></span>' +
-      '<input type="email" id="f-email" maxlength="120" autocomplete="email" ' +
+      '<input type="email" class="ym-disable-keys" id="f-email" maxlength="120" autocomplete="email" ' +
       'placeholder="' + escapeHtml(F.fields.email.placeholder) + '" ' +
       'value="' + escapeHtml(state.contact.email) + '">' +
       fieldError('email') + '</label>' +
@@ -794,7 +794,7 @@
       '<label class="field" data-field="comment">' +
       '<span class="field__label">' + escapeHtml(F.fields.comment.label) +
       ' <span class="field__optional">' + escapeHtml(LBL.optional) + '</span></span>' +
-      '<textarea id="f-comment" rows="3" maxlength="2000" ' +
+      '<textarea class="ym-disable-keys" id="f-comment" rows="3" maxlength="2000" ' +
       'placeholder="' + escapeHtml(F.fields.comment.placeholder) + '">' +
       escapeHtml(state.contact.comment) + '</textarea></label>' +
       '</details>' +

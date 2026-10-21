@@ -38,7 +38,7 @@ const AMFODENT_CONFIG = {
     multiWorkplaceNote: 'Компрессор и стерилизация для нескольких рабочих мест — мощность и комплектацию подберёт менеджер',
 
     // ID счётчика Яндекс.Метрики. Укажите при интеграции — см. INTEGRATION.md.
-    yandexMetrikaCounterId: null
+    yandexMetrikaCounterId: 113714896
   },
 
   // ----- ТЕКСТЫ ИНТЕРФЕЙСА -----
