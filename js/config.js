@@ -213,9 +213,9 @@ const AMFODENT_CONFIG = {
       label: 'Стартовый',
       items: {
         installation:  { label: 'Установка Premier 05', price: 270000, priceFrom: true },
-        compressor:    { label: 'Компрессор Mercury HK-1EW-30, 70 л', price: 30000, priceFrom: true },
+        compressor:    { label: 'Компрессор Mercury HK-1EW-30, 70 л', price: 30000, priceFrom: true },
         sterilization: { label: 'Комплект стерилизации', price: 130000, priceFrom: true,
-                         includes: ['Автоклав Runyes Wind 23 л', 'Дистиллятор', 'Запечатывающее устройство'] },
+                         includes: ['Автоклав Runyes Wind 23 л', 'Дистиллятор', 'Запечатывающее устройство'] },
         furniture:     { label: 'Мебель Arkodent 4', price: 88000, priceFrom: true },
         handpieces:    { label: 'Наконечники Tosi', price: 20200, priceFrom: true,
                          includes: ['Турбинный', 'Угловой', 'Прямой', 'Воздушный мотор'] }
@@ -226,9 +226,9 @@ const AMFODENT_CONFIG = {
       label: 'Базовый',
       items: {
         installation:  { label: 'Установка Kaiser', price: 480000, priceFrom: true },
-        compressor:    { label: 'Компрессор Mercury HK-2EW-35, 100 л', price: 40000, priceFrom: true },
+        compressor:    { label: 'Компрессор Mercury HK-2EW-35, 100 л', price: 40000, priceFrom: true },
         sterilization: { label: 'Комплект стерилизации', price: 130000, priceFrom: true,
-                         includes: ['Автоклав Runyes Wind 23 л', 'Дистиллятор', 'Запечатывающее устройство'] },
+                         includes: ['Автоклав Runyes Wind 23 л', 'Дистиллятор', 'Запечатывающее устройство'] },
         furniture:     { label: 'Мебель Arkodent 3', price: 132000, priceFrom: true },
         handpieces:    { label: 'Наконечники Tosi', price: 20200, priceFrom: true,
                          includes: ['Турбинный', 'Угловой', 'Прямой', 'Воздушный мотор'] }
