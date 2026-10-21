@@ -158,7 +158,9 @@
   }
 
   function submitLead(payload) {
-    if (window.AmfodentLeads && window.AmfodentLeads.isConfigured()) {
+    // Все заявки идут через js/leads.js на российский сервер (152-ФЗ, локализация).
+    // Старый блок прямой отправки в Telegram из браузера ниже не используется.
+    if (window.AmfodentLeads) {
       return window.AmfodentLeads.send(leadFromPayload(payload));
     }
     if (telegramConfigured()) {
@@ -202,7 +204,7 @@
       tomographFov: firstId(C.tomographFov.options),
       extras: [],
       services: { extendedServiceInterest: false },
-      contact: { name: '', phone: '', email: '', city: '', contactMethod: null, contactTime: 'today', comment: '', consent: false },
+      contact: { name: '', phone: '', email: '', city: '', contactMethod: 'phone', contactTime: 'today', comment: '', consent: false },
       submitted: false,
       lastSubmissionPayload: null
     };
@@ -255,7 +257,7 @@
     s.contact.email = str(contact.email, 120);
     s.contact.city = str(contact.city, 120);
     s.contact.comment = str(contact.comment, 2000);
-    s.contact.contactMethod = validId(C.contactMethods, contact.contactMethod);
+    s.contact.contactMethod = validId(C.contactMethods, contact.contactMethod) || 'phone';
     s.contact.contactTime = validId(C.contactTimes, contact.contactTime) || 'today';
     s.contact.consent = !!contact.consent;
 
@@ -717,6 +719,23 @@
       fieldError(name) + '</label>';
   }
 
+  // Варианты «когда связаться» с учётом рабочего времени (js/leads.js).
+  function timeOptions() {
+    const L = window.AmfodentLeads;
+    return (L && L.contactTimes) ? L.contactTimes()
+      : C.contactTimes.filter(function (t) { return t.id !== 'next'; });
+  }
+
+  function currentTime() {
+    const opts = timeOptions();
+    let t = opts.filter(function (o) { return o.id === state.contact.contactTime; })[0];
+    if (!t) {
+      t = opts.filter(function (o) { return !o.urgent; })[0] || opts[0];
+      state.contact.contactTime = t.id;
+    }
+    return t;
+  }
+
   function renderForm() {
     const F = UI.form;
     const emailRequired = isEmailRequired();
@@ -728,7 +747,8 @@
       });
     }).join('');
 
-    const times = C.contactTimes.map(function (m) {
+    currentTime();
+    const times = timeOptions().map(function (m) {
       return optionCard({
         type: 'radio', name: 'contact_time', value: m.id,
         checked: state.contact.contactTime === m.id, title: m.label
@@ -744,7 +764,7 @@
       textField('phone', F.fields.phone, 'tel', state.contact.phone, 'maxlength="40" autocomplete="tel" ') +
       '</div>' +
 
-      '<div class="field-row">' +
+      '<div class="field-row" id="email-row"' + (state.contact.contactMethod === 'email' ? '' : ' hidden') + '>' +
       '<label class="field" data-field="email">' +
       '<span class="field__label">' + escapeHtml(F.fields.email.label) +
       '<span class="field__required' + (emailRequired ? '' : ' is-hidden') + '" id="email-required" aria-hidden="true"> ' +
@@ -755,7 +775,6 @@
       'placeholder="' + escapeHtml(F.fields.email.placeholder) + '" ' +
       'value="' + escapeHtml(state.contact.email) + '">' +
       fieldError('email') + '</label>' +
-      textField('city', F.fields.city, 'text', state.contact.city, 'maxlength="120" autocomplete="address-level2" ') +
       '</div>' +
 
       '<div class="field" data-field="contactMethod">' +
@@ -770,12 +789,15 @@
       '<div class="option-grid option-grid--compact">' + times + '</div>' +
       '</div>' +
 
+      '<details class="field-more"' + (state.contact.comment ? ' open' : '') + '>' +
+      '<summary>Добавить комментарий</summary>' +
       '<label class="field" data-field="comment">' +
       '<span class="field__label">' + escapeHtml(F.fields.comment.label) +
       ' <span class="field__optional">' + escapeHtml(LBL.optional) + '</span></span>' +
       '<textarea id="f-comment" rows="3" maxlength="2000" ' +
       'placeholder="' + escapeHtml(F.fields.comment.placeholder) + '">' +
       escapeHtml(state.contact.comment) + '</textarea></label>' +
+      '</details>' +
 
       '<div class="field field--consent" data-field="consent">' +
       optionCard({
@@ -882,6 +904,9 @@
       (c.provisionalUsed ? tag(P.provisionalBadge, 'provisional') : '') +
       '</div>' +
       items + totals +
+      (!c.isEmpty && state.step < STEPS.length
+        ? '<button type="button" class="panel__send" data-send-calc>Прислать расчёт в Telegram, MAX или на почту</button>'
+        : '') +
       '<p class="disclaimer disclaimer--panel">' + escapeHtml(C.meta.disclaimer) + '</p>';
   }
 
@@ -939,8 +964,19 @@
       '<span class="mobile-bar__action-text">' + escapeHtml(UI.panel.detailsToggle) + '</span>' +
       '<span class="mobile-bar__arrow" aria-hidden="true"></span></span>' +
       '</button>' +
+      '<button type="button" class="mobile-bar__send" data-send-calc aria-label="Прислать расчёт в Telegram, MAX или на почту">Прислать</button>' +
       '<div class="mobile-bar__panel" id="mobile-bar-panel" hidden>' +
       '<div id="mobile-bar-body"></div></div>';
+
+    // «Прислать расчёт» с любого шага: открывает короткую форму на лендинге
+    // с приложенным расчётом (окно «Консультация», режим calc).
+    root.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-send-calc]');
+      if (!btn) return;
+      e.preventDefault();
+      if (window.AmfodentConsult) window.AmfodentConsult.open('calc');
+      else goToStep(STEPS.length);
+    });
 
     document.getElementById('mobile-bar-toggle').addEventListener('click', function () {
       mobileBarOpen = !mobileBarOpen;
@@ -988,6 +1024,10 @@
         persist();
       });
     });
+
+    if (window.AmfodentLeads && window.AmfodentLeads.maskPhone) {
+      window.AmfodentLeads.maskPhone(document.getElementById('f-phone'));
+    }
 
     const form = document.getElementById('lead-form');
     if (form) form.addEventListener('submit', handleFormSubmit);
@@ -1140,6 +1180,8 @@
     const required = isEmailRequired();
     req.classList.toggle('is-hidden', !required);
     opt.classList.toggle('is-hidden', required);
+    const row = document.getElementById('email-row');
+    if (row) row.hidden = state.contact.contactMethod !== 'email';
   }
 
   // =========================================================================
@@ -1174,12 +1216,11 @@
     const errors = {};
     const c = state.contact;
 
-    if (!c.name.trim()) errors.name = E.name;
-
     const phone = c.phone.trim();
-    const digits = phone.replace(/\D/g, '');
-    if (!phone) errors.phone = E.phone;
-    else if (digits.length < 10) errors.phone = E.phoneFormat;
+    const L = window.AmfodentLeads;
+    const phoneOk = L && L.isPhoneValid ? L.isPhoneValid(phone) : phone.replace(/\D/g, '').length >= 10;
+    if (!phone || /^\+7 \(?$/.test(phone)) errors.phone = E.phone;
+    else if (!phoneOk) errors.phone = E.phoneFormat;
 
     if (!c.contactMethod) errors.contactMethod = E.contactMethod;
 
@@ -1300,7 +1341,7 @@
   function buildSubmissionPayload(yandexClientId) {
     const c = calc();
     const contactMethodItem = AmfodentCalculator.findById(C.contactMethods, state.contact.contactMethod);
-    const contactTimeItem = AmfodentCalculator.findById(C.contactTimes, state.contact.contactTime);
+    const contactTimeItem = currentTime();
 
     return {
       source: 'amfodent_calculator',

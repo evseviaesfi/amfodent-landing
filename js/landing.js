@@ -381,6 +381,7 @@
         engineer: { kicker: 'Консультация инженера', title: 'Перезвоним и ответим на вопросы', sub: 'Инженер подскажет по комплектации, планировке и срокам. Это бесплатно.', subject: 'Консультация инженера' },
         callback: { kicker: 'Обратный звонок', title: 'Перезвоним, когда вам удобно', sub: 'Оставьте номер — менеджер позвонит и ответит на вопросы по оснащению.', subject: 'Обратный звонок' },
         question: { kicker: 'Вопрос инженеру', title: 'Спросите про ваш кабинет', sub: 'Напишите вопрос — инженер ответит удобным для вас способом.', subject: 'Вопрос инженеру' },
+        calc: { kicker: 'Ваш расчёт', title: 'Пришлём расчёт, куда удобно', sub: 'Менеджер отправит расчёт с пояснениями и ответит на вопросы. Обязательно только телефон.', subject: 'Расчёт из калькулятора', method: 'Telegram', button: 'Прислать расчёт →' },
         lead: { kicker: 'Заявка', title: 'Подберём кабинет вместе', sub: 'Менеджер свяжется с вами, уточнит задачу и подготовит предложение.', subject: 'Заявка с лендинга' }
       };
 
@@ -407,19 +408,41 @@
         return { short: (kit ? kit.label : st.kit) + (total ? ', ~' + money(total) : ''), lines: lines, total: total };
       }
 
+      const whenBox = document.getElementById('consult-when');
+      const L = window.AmfodentLeads;
+      if (L && L.maskPhone) L.maskPhone(form.elements.phone);
+
+      // «Когда связаться»: варианты зависят от рабочего времени (js/leads.js).
+      function renderWhen() {
+        const opts = (L && L.contactTimes) ? L.contactTimes()
+          : [{ id: 'today', label: 'Сегодня' }, { id: 'days', label: 'В ближайшие дни' }];
+        const def = opts.filter(function (o) { return !o.urgent; })[0] || opts[0];
+        whenBox.innerHTML = opts.map(function (o) {
+          return '<label><input type="radio" name="when" value="' + o.label + '"' +
+            (o.urgent ? ' data-urgent="1"' : '') + (o === def ? ' checked' : '') +
+            '><span>' + o.label + '</span></label>';
+        }).join('');
+      }
+
       function open(m, prefillQuestion) {
         mode = MODES[m] ? m : 'engineer';
+        renderWhen();
         const M = MODES[mode];
         document.getElementById('consult-kicker').textContent = M.kicker;
         document.getElementById('consult-title').textContent = M.title;
         document.getElementById('consult-sub').textContent = M.sub;
+        submitBtn.textContent = M.button || 'Отправить заявку →';
         form.hidden = false;
         done.hidden = true;
         errorEl.hidden = true;
         form.querySelectorAll('.has-error').forEach(function (el) { el.classList.remove('has-error'); });
         const sum = calcSummary();
         attachWrap.hidden = !sum;
-        if (sum) calcLabel.textContent = sum.short;
+        if (sum) { calcLabel.textContent = sum.short; form.elements.attach.checked = true; }
+        if (M.method) {
+          const mi = form.querySelector('input[name="method"][value="' + M.method + '"]');
+          if (mi) { mi.checked = true; emailWrap.hidden = M.method !== 'Email'; }
+        }
         if (prefillQuestion && form.elements.question) form.elements.question.value = String(prefillQuestion).slice(0, 1000);
         lastFocus = document.activeElement;
         modal.hidden = false;
@@ -463,8 +486,8 @@
         const method = (form.querySelector('input[name="method"]:checked') || {}).value || 'Звонок';
         const whenEl = form.querySelector('input[name="when"]:checked');
         const errors = [];
-        if (!v('name')) errors.push('name');
-        if (v('phone').replace(/\D/g, '').length < 10) errors.push('phone');
+        const phoneOk = L && L.isPhoneValid ? L.isPhoneValid(v('phone')) : v('phone').replace(/\D/g, '').length >= 10;
+        if (!phoneOk) errors.push('phone');
         if (method === 'Email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('email'))) errors.push('email');
         if (!form.elements.consent.checked) errors.push('consent');
         form.querySelectorAll('.has-error').forEach(function (el) { el.classList.remove('has-error'); });
@@ -472,7 +495,8 @@
           errors.forEach(function (n) { const w = form.querySelector('[data-f="' + n + '"]'); if (w) w.classList.add('has-error'); });
           errorEl.textContent = errors.indexOf('consent') !== -1 && errors.length === 1
             ? 'Отметьте согласие на обработку данных.'
-            : 'Проверьте выделенные поля: имя, телефон (не меньше 10 цифр)' + (method === 'Email' ? ', email' : '') + '.';
+            : 'Проверьте ' + (errors.indexOf('phone') !== -1 ? 'телефон: +7 и 10 цифр' : '') +
+              (errors.indexOf('email') !== -1 ? (errors.indexOf('phone') !== -1 ? ' и ' : '') + 'email' : '') + '.';
           errorEl.hidden = false;
           return;
         }
@@ -505,14 +529,14 @@
         }
         sender.then(function (res) {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Жду звонка →';
+          submitBtn.textContent = MODES[mode].button || 'Отправить заявку →';
           const ok = !!(res && res.delivered);
           form.hidden = true;
           done.hidden = false;
           document.getElementById('consult-done-kicker').textContent = ok ? 'Готово' : 'Не отправилось';
           document.getElementById('consult-done-title').textContent = ok ? 'Заявка у нас' : 'Не получилось отправить';
           document.getElementById('consult-done-text').textContent = ok
-            ? 'Свяжемся ' + (whenEl ? whenEl.value.toLowerCase() : 'сегодня') + ' — ' + (method === 'Звонок' ? 'позвоним' : 'напишем в ' + method) + '. Рабочее время: пн–чт 10:00–18:00, пт 10:00–17:00.'
+            ? 'Свяжемся ' + (whenEl ? whenEl.value.toLowerCase() : 'сегодня') + ': ' + (method === 'Звонок' ? 'позвоним' : method === 'Email' ? 'напишем на почту' : 'напишем в ' + method) + '. Рабочее время: пн–чт 10:00–18:00, пт 10:00–17:00 по Москве.'
             : 'Похоже, проблема со связью. Позвоните нам — 8 (800) 550-45-35, бесплатно по России.';
           if (ok) form.reset();
           emailWrap.hidden = true;
@@ -634,7 +658,8 @@
         'Stern Weber': ['стерн', 'штерн', 'stern'], 'Castellini': ['кастеллини', 'кастелини'], 'Anthos': ['антос'],
         'Vatech': ['ватек', 'ватеч'], 'NewTom': ['ньютом', 'нью том'], 'Genoray': ['генорей'], 'Carestream': ['карестрим'],
         'Chirana': ['хирана'], 'Diplomat': ['дипломат'], 'Lifedent': ['лайфдент'], 'Siger': ['сигер'],
-        'Ajax': ['аякс'], 'Slovadent': ['словадент'], 'Trident': ['трайдент', 'тридент'], 'Cattani': ['каттани']
+        'Ajax': ['аякс'], 'Slovadent': ['словадент'], 'Trident': ['трайдент', 'тридент'], 'Cattani': ['каттани'],
+        'MyRay': ['майрей', 'май рей', 'my ray'], 'Tosi': ['този', 'тоси'], 'Ivoclar': ['ивоклар'], 'Delaude': ['делауде', 'делод'], 'Runyes': ['раниес', 'руньес', 'раньес']
       };
       function escapeRe(x) { return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
       function brandMentioned(text) {
@@ -678,7 +703,7 @@
         },
         {
           test: /рассрочк|кредит|скидк|акци/i,
-          reply: 'Да, есть рассрочка и корпоративные скидки при заказе полного комплекта — точные условия зависят от суммы, посчитаю вместе с вами.',
+          reply: 'Кредит и лизинг можно оформить через наши компании-партнёры, условия у них индивидуальные. При заказе полного комплекта есть корпоративные скидки. Начните с расчёта, а условия менеджер подберёт под сумму.',
           cta: 'Прикинуть сумму →',
           action: function () { scrollToCalculator(); }
         },
@@ -687,6 +712,11 @@
           test: function (text) { return brandMentioned(text).length > 0; },
           reply: function (text) {
             const b = brandMentioned(text);
+            const DEALER = ['Stern Weber', 'Sirona', 'MyRay', 'Tosi', 'Ivoclar', 'Delaude', 'Runyes'];
+            const official = b.filter(function (x) { return DEALER.indexOf(x) !== -1; });
+            if (official.length === b.length) {
+              return 'Да, мы официальный дилер ' + b.join(', ') + '. Подберу модель под ваш кабинет и проверю наличие. Можно сразу оставить телефон.';
+            }
             return 'Да, ' + b.join(', ') + ' — в нашем ассортименте. Подберу модель под ваш кабинет и проверю наличие. Полный список брендов — на странице, а можно сразу оставить телефон.';
           },
           cta: 'Все бренды →',
@@ -697,7 +727,7 @@
         {
           // Общий вопрос о брендах / производителях
           test: /бр[еэ]нд|марк[аиуеой]|производител|фирм[аыуе]|какие\s+(есть\s+)?(установк|кресл|томограф|рентген|визиограф|оборудован)/i,
-          reply: 'Работаем с ведущими производителями: установки A-dec, KaVo, Sirona, Planmeca, Stern Weber, Castellini и другие; 3D-томографы Vatech, Planmeca, NewTom; рентген и визиографы Trident, Carestream, Genoray. Весь список — в блоке «Бренды».',
+          reply: 'Мы официальный дилер Stern Weber, Sirona, MyRay, Tosi, Ivoclar, Delaude и Runyes. Также поставляем установки A-dec, KaVo, Planmeca, Castellini и другие; 3D-томографы Vatech, Planmeca, NewTom; рентген и визиографы Trident, Carestream, Genoray. Весь список — в блоке «Бренды».',
           cta: 'Смотреть бренды →',
           action: scrollToBrands
         },

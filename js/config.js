@@ -20,7 +20,7 @@ const AMFODENT_CONFIG = {
     currency: '₽',
 
     // Обязательная пометка. Показывается в шапке, в панели расчёта и на шаге итога.
-    disclaimer: 'Расчёт предварительный и не является публичной офертой. Точная стоимость определяется после уточнения комплектации.',
+    disclaimer: 'Цены на октябрь 2026 г., могут измениться вместе с курсом. Расчёт предварительный и не является публичной офертой. Точная стоимость определяется после уточнения комплектации.',
 
     // Диапазон вокруг ориентировочной суммы.
     rangeMinusPercent: 5,
@@ -98,19 +98,19 @@ const AMFODENT_CONFIG = {
       title: 'Отправить расчёт менеджеру',
       note: 'Менеджер свяжется с вами, чтобы уточнить комплектацию и подготовить точную стоимость.',
       fields: {
-        name:    { label: 'Имя', required: true, placeholder: 'Как к вам обращаться' },
-        phone:   { label: 'Телефон', required: true, placeholder: '+7 900 000-00-00' },
+        name:    { label: 'Имя', required: false, placeholder: 'Как к вам обращаться' },
+        phone:   { label: 'Телефон', required: true, placeholder: '+7 (900) 000-00-00' },
         email:   { label: 'Email', required: false, placeholder: 'name@example.com', requiredForContactMethod: 'email' },
         city:    { label: 'Город', required: false, placeholder: 'Город размещения кабинета' },
         contactMethod: { label: 'Удобный способ связи', required: true },
         contactTime: { label: 'Когда связаться', required: true },
         comment: { label: 'Комментарий', required: false, placeholder: 'Сроки, пожелания по моделям, вопросы' }
       },
-      consentLabel: 'Согласен на обработку персональных данных для ответа на эту заявку',
+      consentLabel: 'Даю согласие на обработку персональных данных',
       errors: {
         name: 'Укажите имя',
         phone: 'Укажите телефон',
-        phoneFormat: 'Проверьте номер телефона — нужно не менее 10 цифр',
+        phoneFormat: 'Проверьте номер: +7 и 10 цифр',
         email: 'Укажите email — вы выбрали его способом связи',
         emailFormat: 'Проверьте адрес электронной почты',
         contactMethod: 'Выберите удобный способ связи',
@@ -302,9 +302,9 @@ const AMFODENT_CONFIG = {
       min: 80000,
       // false — монтаж не прибавляется к сумме, а считается отдельно (решение отдела продаж).
       includedInTotal: false,
-      note: 'Оплачивается отдельно — стоимость менеджер укажет в коммерческом предложении.',
-      clarifyNote: 'Монтаж и ввод в эксплуатацию — оплачиваются отдельно',
-      separateLabel: 'оплачивается отдельно',
+      note: 'От 35 000 ₽, оплачивается отдельно. Точная стоимость зависит от помещения и числа мест, её пришлём в коммерческом предложении.',
+      clarifyNote: 'Монтаж и ввод в эксплуатацию — от 35 000 ₽, оплачиваются отдельно',
+      separateLabel: 'от 35 000 ₽',
       currentPrefix: 'по текущему расчёту'
     },
     warrantyInfo: {
@@ -321,7 +321,7 @@ const AMFODENT_CONFIG = {
 
   contactMethods: [
     { id: 'phone',    label: 'Звонок' },
-    { id: 'whatsapp', label: 'WhatsApp' },
+    { id: 'max',      label: 'MAX' },
     { id: 'telegram', label: 'Telegram' },
     { id: 'email',    label: 'Email' }
   ],
@@ -330,6 +330,7 @@ const AMFODENT_CONFIG = {
   contactTimes: [
     { id: 'hour',  label: 'В течение часа', urgent: true },
     { id: 'today', label: 'Сегодня' },
+    { id: 'next',  label: 'В ближайший рабочий день' },
     { id: 'days',  label: 'В ближайшие дни' }
   ],
   workingHours: 'пн–чт 10:00–18:00, пт 10:00–17:00',
