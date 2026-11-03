@@ -659,7 +659,7 @@
         'Vatech': ['ватек', 'ватеч'], 'NewTom': ['ньютом', 'нью том'], 'Genoray': ['генорей'], 'Carestream': ['карестрим'],
         'Chirana': ['хирана'], 'Diplomat': ['дипломат'], 'Lifedent': ['лайфдент'], 'Siger': ['сигер'],
         'Ajax': ['аякс'], 'Slovadent': ['словадент'], 'Trident': ['трайдент', 'тридент'], 'Cattani': ['каттани'],
-        'MyRay': ['майрей', 'май рей', 'my ray'], 'Tosi': ['този', 'тоси'], 'Ivoclar': ['ивоклар'], 'Delaude': ['делауде', 'делод'], 'Runyes': ['раниес', 'руньес', 'раньес']
+        'MyRay': ['майрей', 'май рей', 'my ray'], 'Tosi': ['този', 'тоси'], 'Ivoclar': ['ивоклар'], 'Dalaude': ['далауде', 'далод', 'delaude', 'делауде'], 'SOCO': ['соко'], 'Runyes': ['раниес', 'руньес', 'раньес']
       };
       function escapeRe(x) { return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
       function brandMentioned(text) {
@@ -712,10 +712,15 @@
           test: function (text) { return brandMentioned(text).length > 0; },
           reply: function (text) {
             const b = brandMentioned(text);
-            const DEALER = ['Stern Weber', 'Sirona', 'MyRay', 'Tosi', 'Ivoclar', 'Delaude', 'Runyes'];
-            const official = b.filter(function (x) { return DEALER.indexOf(x) !== -1; });
-            if (official.length === b.length) {
-              return 'Да, мы официальный дилер ' + b.join(', ') + '. Подберу модель под ваш кабинет и проверю наличие. Можно сразу оставить телефон.';
+            const EXCL = ['Tosi', 'Runyes', 'SOCO', 'Dalaude'];
+            const DEALER = ['Stern Weber', 'Sirona', 'MyRay', 'Ivoclar'];
+            const ex = b.filter(function (x) { return EXCL.indexOf(x) !== -1; });
+            const dl = b.filter(function (x) { return DEALER.indexOf(x) !== -1; });
+            if (ex.length + dl.length === b.length) {
+              const parts = [];
+              if (ex.length) parts.push('эксклюзивный дистрибьютор ' + ex.join(', ') + ' в России');
+              if (dl.length) parts.push('официальный дилер ' + dl.join(', '));
+              return 'Да, мы ' + parts.join(' и ') + '. Подберу модель под ваш кабинет и проверю наличие. Можно сразу оставить телефон.';
             }
             return 'Да, ' + b.join(', ') + ' — в нашем ассортименте. Подберу модель под ваш кабинет и проверю наличие. Полный список брендов — на странице, а можно сразу оставить телефон.';
           },
@@ -727,7 +732,7 @@
         {
           // Общий вопрос о брендах / производителях
           test: /бр[еэ]нд|марк[аиуеой]|производител|фирм[аыуе]|какие\s+(есть\s+)?(установк|кресл|томограф|рентген|визиограф|оборудован)/i,
-          reply: 'Мы официальный дилер Stern Weber, Sirona, MyRay, Tosi, Ivoclar, Delaude и Runyes. Также поставляем установки A-dec, KaVo, Planmeca, Castellini и другие; 3D-томографы Vatech, Planmeca, NewTom; рентген и визиографы Trident, Carestream, Genoray. Весь список — в блоке «Бренды».',
+          reply: 'Мы эксклюзивный дистрибьютор Tosi, Runyes, SOCO и Dalaude в России и официальный дилер Stern Weber, Sirona, MyRay и Ivoclar. Также поставляем установки A-dec, KaVo, Planmeca, Castellini и другие; 3D-томографы Vatech, Planmeca, NewTom; рентген и визиографы Trident, Carestream, Genoray. Весь список — в блоке «Бренды».',
           cta: 'Смотреть бренды →',
           action: scrollToBrands
         },
