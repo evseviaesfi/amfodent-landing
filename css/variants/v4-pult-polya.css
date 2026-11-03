@@ -549,3 +549,15 @@ a.lp-hero-dealer:hover { color: var(--amf-blue, #1C8FD6); }
 .lp-footer__links a { color: inherit; text-underline-offset: 3px; }
 /* H1 в коде строчными, на экране заглавными */
 .lp-hero-cinematic__headline { text-transform: uppercase; }
+
+/* Эксклюзивные бренды и документы производителей */
+.lp-brand-chip--excl { background: #24713A; border-color: #24713A; }
+.lp-docs { margin-top: 40px; }
+.lp-docs__row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 12px; }
+@media (max-width: 759px) { .lp-docs__row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.lp-doc { display: flex; flex-direction: column; gap: 10px; padding: 12px; background: #FFFFFF; border-radius: 16px; text-decoration: none; color: #11294A; box-shadow: 0 1px 0 rgba(17,41,74,0.06); transition: box-shadow .15s ease, transform .15s ease; }
+.lp-doc:hover { box-shadow: 0 14px 30px -18px rgba(17,41,74,0.45); transform: translateY(-2px); }
+.lp-doc:focus-visible { outline: 2px solid #1C8FD6; outline-offset: 3px; }
+.lp-doc img { width: 100%; height: 200px; object-fit: contain; background: #F2F5F7; border-radius: 10px; }
+.lp-doc span { font-size: 14px; font-weight: 600; line-height: 1.3; }
+@media (prefers-reduced-motion: reduce) { .lp-doc { transition: none; } .lp-doc:hover { transform: none; } }
