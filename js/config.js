@@ -20,7 +20,7 @@ const AMFODENT_CONFIG = {
     currency: '₽',
 
     // Обязательная пометка. Показывается в шапке, в панели расчёта и на шаге итога.
-    disclaimer: 'Цены на октябрь 2026 г., могут измениться вместе с курсом. Расчёт предварительный и не является публичной офертой. Точная стоимость определяется после уточнения комплектации.',
+    disclaimer: 'Цены ориентировочные, могут измениться вместе с курсом валют. Расчёт предварительный и не является публичной офертой. Точную стоимость уточняйте у менеджера.',
 
     // Диапазон вокруг ориентировочной суммы.
     rangeMinusPercent: 5,
@@ -212,12 +212,12 @@ const AMFODENT_CONFIG = {
       id: 'starter',
       label: 'Стартовый',
       items: {
-        installation:  { label: 'Установка Premier 05', price: 270000, priceFrom: true },
-        compressor:    { label: 'Компрессор Mercury HK-1EW-30, 70 л', price: 30000, priceFrom: true },
-        sterilization: { label: 'Комплект стерилизации', price: 130000, priceFrom: true,
+        installation:  { label: 'Установка Premier 05', price: 280000, priceFrom: true },
+        compressor:    { label: 'Компрессор Mercury HK-1EW-30, 70 л', price: 31000, priceFrom: true },
+        sterilization: { label: 'Комплект стерилизации', price: 135000, priceFrom: true,
                          includes: ['Автоклав Runyes Wind 23 л', 'Дистиллятор', 'Запечатывающее устройство'] },
-        furniture:     { label: 'Мебель Arkodent 4', price: 88000, priceFrom: true },
-        handpieces:    { label: 'Наконечники Tosi', price: 20200, priceFrom: true,
+        furniture:     { label: 'Мебель Arkodent 4', price: 91000, priceFrom: true },
+        handpieces:    { label: 'Наконечники Tosi', price: 21000, priceFrom: true,
                          includes: ['Турбинный', 'Угловой', 'Прямой', 'Воздушный мотор'] }
       }
     },
@@ -225,12 +225,12 @@ const AMFODENT_CONFIG = {
       id: 'basic',
       label: 'Базовый',
       items: {
-        installation:  { label: 'Установка Kaiser', price: 480000, priceFrom: true },
-        compressor:    { label: 'Компрессор Mercury HK-2EW-35, 100 л', price: 40000, priceFrom: true },
-        sterilization: { label: 'Комплект стерилизации', price: 130000, priceFrom: true,
+        installation:  { label: 'Установка Kaiser', price: 495000, priceFrom: true },
+        compressor:    { label: 'Компрессор Mercury HK-2EW-35, 100 л', price: 42000, priceFrom: true },
+        sterilization: { label: 'Комплект стерилизации', price: 135000, priceFrom: true,
                          includes: ['Автоклав Runyes Wind 23 л', 'Дистиллятор', 'Запечатывающее устройство'] },
-        furniture:     { label: 'Мебель Arkodent 3', price: 132000, priceFrom: true },
-        handpieces:    { label: 'Наконечники Tosi', price: 20200, priceFrom: true,
+        furniture:     { label: 'Мебель Arkodent 3', price: 140000, priceFrom: true },
+        handpieces:    { label: 'Наконечники Tosi', price: 21000, priceFrom: true,
                          includes: ['Турбинный', 'Угловой', 'Прямой', 'Воздушный мотор'] }
       }
     },
@@ -238,12 +238,12 @@ const AMFODENT_CONFIG = {
       id: 'optimum',
       label: 'Надёжный оптимум',
       items: {
-        installation:  { label: 'Установка Stern Weber S200 Continental', price: 900000, priceFrom: true },
-        compressor:    { label: 'Компрессор Lifedent SP075', price: 110000, priceFrom: true },
-        sterilization: { label: 'Расширенный комплект стерилизации', price: 230000, priceFrom: true,
+        installation:  { label: 'Установка Stern Weber S200 Continental', price: 930000, priceFrom: true },
+        compressor:    { label: 'Компрессор Lifedent SP075', price: 115000, priceFrom: true },
+        sterilization: { label: 'Расширенный комплект стерилизации', price: 240000, priceFrom: true,
                          includes: ['Автоклав Stern Weber SW-22', 'Дистиллятор', 'Запечатывающее устройство', 'Аппарат для чистки и смазки наконечников'] },
-        furniture:     { label: 'Мебель Arkodent 3', price: 132000, priceFrom: true },
-        handpieces:    { label: 'Наконечники Sirona', price: 70000, priceFrom: true,
+        furniture:     { label: 'Мебель Arkodent 3', price: 140000, priceFrom: true },
+        handpieces:    { label: 'Наконечники Sirona', price: 75000, priceFrom: true,
                          includes: ['Турбинный', 'Угловой', 'Прямой'] }
       }
     },
@@ -251,12 +251,12 @@ const AMFODENT_CONFIG = {
       id: 'premium',
       label: 'Премиум',
       items: {
-        installation:  { label: 'Установка Stern Weber S380 TRC', price: 1400000, priceFrom: true },
-        compressor:    { label: 'Компрессор Lifedent SP075', price: 110000, priceFrom: true },
-        sterilization: { label: 'Расширенный комплект стерилизации', price: 230000, priceFrom: true,
+        installation:  { label: 'Установка Stern Weber S380 TRC', price: 1450000, priceFrom: true },
+        compressor:    { label: 'Компрессор Lifedent SP075', price: 115000, priceFrom: true },
+        sterilization: { label: 'Расширенный комплект стерилизации', price: 240000, priceFrom: true,
                          includes: ['Автоклав Stern Weber SW-22', 'Дистиллятор', 'Запечатывающее устройство', 'Аппарат для чистки и смазки наконечников'] },
-        furniture:     { label: 'Мебель Arkodent 1', price: 190000, priceFrom: true },
-        handpieces:    { label: 'Наконечники Sirona', price: 70000, priceFrom: true,
+        furniture:     { label: 'Мебель Arkodent 1', price: 200000, priceFrom: true },
+        handpieces:    { label: 'Наконечники Sirona', price: 75000, priceFrom: true,
                          includes: ['Турбинный', 'Угловой', 'Прямой'] }
       }
     }
@@ -265,9 +265,9 @@ const AMFODENT_CONFIG = {
   // ----- ШАГ 5: рентген и 3D (множественный выбор) -----
   // hasFov: true — у позиции есть выбор поля обзора (см. tomographFov ниже).
   xray: [
-    { id: 'portable',   label: 'Портативный рентген Genoray Port-X IVe', price: 140000, priceFrom: true },
-    { id: 'wall',       label: 'Настенный рентген MyRay RXDC eXtend',    price: 130000, priceFrom: true },
-    { id: 'visiograph', label: 'Радиовизиограф MyRay Zen-X HD',          price: 120000, priceFrom: true },
+    { id: 'portable',   label: 'Портативный рентген Genoray Port-X IVe', price: 145000, priceFrom: true },
+    { id: 'wall',       label: 'Настенный рентген MyRay RXDC eXtend',    price: 135000, priceFrom: true },
+    { id: 'visiograph', label: 'Радиовизиограф MyRay Zen-X HD',          price: 125000, priceFrom: true },
     { id: 'tomograph',  label: '3D-томограф', hasFov: true }
   ],
 
@@ -276,10 +276,10 @@ const AMFODENT_CONFIG = {
   tomographFov: {
     label: 'Поле обзора',
     options: [
-      { id: '10x10', label: '10×10 см', model: 'MyRay Hyperion X5',     price: 2100000, priceFrom: true },
-      { id: '11x13', label: '11×13 см', model: 'MyRay Hyperion X9',     price: 3200000, priceFrom: true },
-      { id: '13x16', label: '13×16 см', model: 'MyRay Hyperion X9 PRO', price: 3500000, priceFrom: true },
-      { id: '16x18', label: '16×18 см', model: '',                      price: 3900000, priceFrom: true }
+      { id: '10x10', label: '10×10 см', model: 'MyRay Hyperion X5',     price: 2170000, priceFrom: true },
+      { id: '11x13', label: '11×13 см', model: 'MyRay Hyperion X9',     price: 3300000, priceFrom: true },
+      { id: '13x16', label: '13×16 см', model: 'MyRay Hyperion X9 PRO', price: 3610000, priceFrom: true },
+      { id: '16x18', label: '16×18 см', model: '',                      price: 4020000, priceFrom: true }
     ]
   },
 
